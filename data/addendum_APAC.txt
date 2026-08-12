@@ -1,0 +1,60 @@
+Region: APAC
+Effective Date: 2026-03-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service.
+Eligibility is assessed as of the last day of the calendar year.
+Continuous service is measured from the most recent hire date.
+Seconded employees retain eligibility under their home-country terms.
+Fixed-term contract employees are eligible from their start date.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 4 days         |
+| Regular       | 6 months - 2 yrs  | 8 days         |
+| Senior        | > 2 yrs           | 12 days        |
+Caps apply per calendar year and are not cumulative across years.
+Country-specific statutory minimums override these caps where more generous.
+Carry-over is calculated on accrued, unused vacation balances as of December 31.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on June 30 of the following calendar year.
+| Employee Type | Expiry Date |
+|---------------|-------------|
+| Probationary  | June 30     |
+| Regular       | June 30     |
+| Senior        | September 30|
+Expired days are forfeited without payout except where local law requires payment.
+Employees receive an HRIS reminder 60 days before expiry.
+
+HR-207 Section 4.5 - Payout on Termination
+Unused carried-over days are paid at 75% of the base daily rate on voluntary termination.
+On involuntary termination, payout follows local statutory requirements.
+Probationary employees are not eligible for carry-over payout.
+Payment is made with the final payroll run of the employment month.
+Payout rates are calculated on the base salary in effect on the separation date.
+
+HR-207 Section 4.6 - Negative Balance
+Employees may borrow up to 2 vacation days ahead of accrual with manager approval.
+Negative balances must be repaid within 3 months through accrual.
+Any remaining negative balance at separation is deducted from final pay where legally permitted.
+Borrowing is not permitted during probation.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees are eligible for carry-over on a pro-rata basis proportional to contracted hours.
+Eligibility requires at least 20 scheduled hours per week.
+Pro-rata calculations round to the nearest half day.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS by December 1 of the current year.
+Managers must approve or deny requests within 7 business days.
+Peak-season blackout periods (local New Year holidays) require site-lead approval for carry-over usage.
+Blackout dates are published per site each October.
+
+HR-207 Section 4.9 - Policy Exceptions
+Country HR managers may grant exceptions of up to 3 additional carry-over days per employee per year.
+Exceptions require a written business justification stored in the HRIS.
+All exceptions are reviewed in the regional audit each April.
+Repeated exceptions for the same employee require regional HR approval.

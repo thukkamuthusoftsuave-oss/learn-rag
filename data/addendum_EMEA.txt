@@ -1,0 +1,64 @@
+Region: EMEA
+Effective Date: 2026-02-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service.
+Eligibility is assessed as of the last day of the fiscal year.
+Continuous service is measured from the most recent hire date.
+Where local law is more generous than this policy, local law prevails.
+Agency workers are covered only where required by local regulation.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 6 days         |
+| Regular       | 6 months - 2 yrs  | 12 days        |
+| Senior        | > 2 yrs           | 18 days        |
+Caps apply per calendar year and are not cumulative across years.
+Statutory minimum carry-over rights in member states are unaffected by these caps.
+Collective agreements may set higher caps for specific sites or roles.
+
+HR-207 Section 4.3 - Sabbatical
+After 5 years, EMEA employees receive a 4-week sabbatical.
+The sabbatical is fully paid at the base salary rate.
+It must be taken within 12 months of becoming eligible, in one continuous block.
+Sabbatical time does not count toward continuous service for carry-over purposes.
+Employees must give at least 3 months notice before taking the sabbatical.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on April 30 of the following calendar year.
+| Employee Type | Expiry Date |
+|---------------|-------------|
+| Probationary  | April 30    |
+| Regular       | April 30    |
+| Senior        | July 31     |
+Works councils may negotiate later expiry dates for specific sites.
+Employees on long-term sick leave retain carried-over days for up to 15 months where statute requires.
+
+HR-207 Section 4.5 - Payout on Termination
+Unused carried-over days are paid at 100% of the base daily rate on any termination.
+Payout follows local statutory timelines, which range from the final paycheck to 60 days.
+Forfeiture of statutory carry-over is not permitted in EMEA jurisdictions.
+Collective-agreement payout rules take precedence where they are more favorable.
+
+HR-207 Section 4.6 - Negative Balance
+Employees may borrow up to 3 vacation days ahead of accrual with manager and works-council approval.
+Negative balances must be repaid within 6 months through accrual.
+Some member states prohibit paycheck deductions; in those, repayment is by future accrual only.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees are eligible for carry-over on a pro-rata basis proportional to their FTE percentage.
+A 50% FTE Regular employee, for example, may carry over up to 6 days.
+Pro-rata calculations round up to the nearest half day.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS by November 30 of the current year.
+Managers must respond within 10 business days.
+Works councils receive quarterly reports of approved carry-over balances.
+Sites with collective agreements follow the notice periods defined in those agreements.
+
+HR-207 Section 4.9 - Policy Exceptions
+Site HR leads may grant exceptions only where a collective agreement permits them.
+Every exception must be reported to the works council at its next quarterly meeting.
+The regional policy owner reviews all exceptions annually each March.

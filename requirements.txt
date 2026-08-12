@@ -1,0 +1,9 @@
+llama-index
+llama-index-vector-stores-chroma
+llama-index-embeddings-huggingface
+llama-index-llms-gemini
+chromadb
+fastapi
+uvicorn
+python-dotenv
+pydantic

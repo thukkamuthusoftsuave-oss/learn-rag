@@ -1,0 +1,61 @@
+Region: US
+Effective Date: 2026-05-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service. Continuous service means 40 hours per week for 52 weeks.
+Eligibility is assessed as of the last day of the calendar year.
+Continuous service is measured from the most recent hire date.
+Approved leaves of absence do not interrupt continuous service but do not accrue toward it.
+Seasonal and temporary employees are not covered by this policy.
+Rehired employees restart their continuous service clock unless rehired within 30 days of separation.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 5 days         |
+| Regular       | 6 months - 2 yrs  | 10 days        |
+| Senior        | > 2 yrs           | 20 days        |
+Caps apply per calendar year and are not cumulative across years.
+State-mandated accrual protections override these caps where applicable.
+Carry-over is calculated on accrued, unused vacation balances as of December 31.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on March 15 of the following calendar year.
+| Employee Type | Expiry Date |
+|---------------|-------------|
+| Probationary  | March 15    |
+| Regular       | March 15    |
+| Senior        | May 31      |
+Expired days are forfeited except in states that prohibit forfeiture of accrued vacation.
+Employees receive an HRIS reminder 45 days before expiry.
+
+HR-207 Section 4.5 - Payout on Termination
+Exempt employees are paid for unused carried-over days at 100% of the base daily rate.
+Non-exempt employees are paid per applicable state law.
+In states that treat accrued vacation as wages, forfeiture on termination is not permitted.
+Payouts are included in the final paycheck per state timing rules.
+
+HR-207 Section 4.6 - Negative Balance
+Employees may borrow up to 5 vacation days ahead of accrual with manager approval.
+Borrowing is not permitted during the probationary period.
+Negative balances must be repaid within 6 months through accrual.
+Deduction of a negative balance from final pay is applied only where state law permits.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees working fewer than 40 hours per week do not meet the continuous-service definition and are not eligible for carry-over.
+This exclusion applies regardless of tenure or employee type.
+Job-share arrangements are treated as part-time for the purposes of this policy.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS by December 1 of the current year.
+Managers must approve or deny requests within 5 business days.
+Use of carried-over days requires at least 10 business days advance notice.
+Late requests are considered only for documented medical or family emergencies.
+
+HR-207 Section 4.9 - Policy Exceptions
+The VP of HR may grant exceptions of up to 5 additional carry-over days per employee per year.
+Exceptions must be documented in the HRIS with a business justification.
+Exceptions in states with accrual-as-wages laws require Legal review.
+All exceptions are reviewed in the annual policy audit each February.
+Exception decisions are final and do not set precedent for other employees.

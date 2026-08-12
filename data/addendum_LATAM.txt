@@ -1,0 +1,60 @@
+Region: LATAM
+Effective Date: 2026-04-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service.
+Eligibility is assessed as of the last day of the calendar year.
+Continuous service is measured from the most recent hire date.
+Statutory vacation rights under local labor codes are unaffected by this policy.
+Employees on statutory leave continue to accrue service toward eligibility.
+Transferred employees keep their continuous service when moving between LATAM entities.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 5 days         |
+| Regular       | 6 months - 2 yrs  | 10 days        |
+| Senior        | > 2 yrs           | 15 days        |
+Caps apply per calendar year and are not cumulative across years.
+Carry-over balances are recorded in the statutory vacation ledger.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on December 31 of the year following accrual.
+| Employee Type | Expiry Date  |
+|---------------|--------------|
+| Probationary  | December 31  |
+| Regular       | December 31  |
+| Senior        | March 31     |
+Expired days are forfeited without payout unless local law requires otherwise.
+Expiry dates follow the statutory vacation calendar of each country.
+Employees receive a written notice 30 days before carried-over days expire.
+
+HR-207 Section 4.5 - Payout on Termination
+Unused carried-over days are paid at 100% of the base daily rate, as required by local labor codes.
+Payout is included in the statutory termination settlement.
+No employee type is excluded from payout where payment is statutorily required.
+Settlement timelines follow each country's labor authority rules.
+
+HR-207 Section 4.6 - Negative Balance
+Negative vacation balances are not permitted in LATAM.
+Vacation may only be taken after it has accrued.
+No exceptions to this rule may be granted by managers or HR.
+Accrual posting dates follow each country's statutory calendar.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees accrue and carry over vacation on a pro-rata basis as defined by local law.
+There is no minimum-hours threshold for eligibility.
+Pro-rata calculations follow the statutory formula of each country.
+Part-time caps are derived from the full-time caps in Section 4.2.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS by November 15 of the current year.
+Managers must approve or deny requests within 10 business days.
+Approved carry-over is recorded in the annual statutory vacation ledger.
+Requests that miss the deadline are deferred to the following cycle.
+
+HR-207 Section 4.9 - Policy Exceptions
+No manager-level exceptions are permitted; statutory rules govern carry-over.
+Country HR may request a policy variance from the regional policy owner in writing.
+Approved variances are published to all employees in the affected country.

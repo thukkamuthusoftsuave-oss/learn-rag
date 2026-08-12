@@ -1,0 +1,62 @@
+Region: UK
+Effective Date: 2026-06-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service.
+Eligibility is assessed as of the last day of the leave year.
+Continuous service is measured from the most recent hire date.
+Statutory holiday rights under the Working Time Regulations are unaffected by this policy.
+Agency workers are covered only after completing 12 continuous weeks in the same role.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 7 days         |
+| Regular       | 6 months - 2 yrs  | 14 days        |
+| Senior        | > 2 yrs           | 21 days        |
+Caps apply per leave year and are not cumulative across years.
+The leave year runs from April 6 to April 5 of the following year.
+
+HR-207 Section 4.3 - Sabbatical
+After 10 years, UK employees receive a 6-week sabbatical.
+The sabbatical is fully paid at the base salary rate.
+It must be taken within 18 months of becoming eligible, in one continuous block.
+Pension contributions continue during the sabbatical period.
+Employees must give at least 3 months notice before taking the sabbatical.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on April 5 of the following tax year.
+| Employee Type | Expiry Date |
+|---------------|-------------|
+| Probationary  | April 5     |
+| Regular       | April 5     |
+| Senior        | June 30     |
+Statutory holiday that cannot be taken due to long-term sickness may be carried over up to 18 months by law.
+Expiry dates are visible in the HRIS balance view throughout the leave year.
+
+HR-207 Section 4.5 - Payout on Termination
+Unused carried-over days are paid at 100% of the base daily rate on any termination.
+Payment in lieu of untaken statutory holiday is included in the final payslip.
+Deductions for days taken beyond accrual follow the employment contract.
+
+HR-207 Section 4.6 - Negative Balance
+Employees may borrow up to 3 vacation days ahead of accrual with manager approval.
+Negative balances must be repaid within 6 months through accrual.
+Deductions from final pay follow the employment contract's deduction clause.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees receive carry-over on a pro-rata basis aligned with statutory holiday entitlement.
+Pro-ration is calculated against the full-time equivalent cap for the employee type.
+Pro-rata calculations round up to the nearest half day.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS at least 20 business days before the leave year ends.
+Notice to use carried-over days must be at least twice the length of the leave requested.
+Managers must respond within 5 business days of submission.
+Requests over the holiday periods in December require site-lead approval.
+
+HR-207 Section 4.9 - Policy Exceptions
+The UK HR director may grant exceptions of up to 5 additional carry-over days per employee per leave year.
+Exceptions must not reduce statutory holiday entitlements under the Working Time Regulations.
+All exceptions are reviewed in the annual policy audit each May.

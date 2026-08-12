@@ -1,0 +1,61 @@
+Region: NA
+Effective Date: 2026-01-01
+
+HR-207 Section 4.1 - Eligibility
+Employees are eligible for carry-over based on continuous service and must be full-time. Continuous service means uninterrupted employment without a break longer than 30 days.
+Eligibility is determined as of the last day of the calendar year.
+Continuous service is measured from the most recent hire date.
+Rehired employees restart their continuous service clock unless rehired within 30 days of separation.
+Contract workers and vendors are not covered by this policy.
+
+HR-207 Section 4.2 - Carry-over Cap
+The following carry-over limits apply:
+| Employee Type | Continuous Service | Carry-over Cap |
+|---------------|-------------------|----------------|
+| Probationary  | < 6 months        | 5 days         |
+| Regular       | 6 months - 2 yrs  | 10 days        |
+| Senior        | > 2 yrs           | 15 days        |
+Caps apply per calendar year and are not cumulative across years.
+Carry-over is calculated on accrued, unused vacation balances as of December 31.
+Balances above the cap are forfeited at year-end unless Section 4.5 applies.
+
+HR-207 Section 4.4 - Carry-over Expiry
+Carried-over days expire on March 31 of the following calendar year.
+Expired days are forfeited without payout.
+| Employee Type | Expiry Date |
+|---------------|-------------|
+| Probationary  | March 31    |
+| Regular       | March 31    |
+| Senior        | June 30     |
+Senior employees receive an extended expiry window as a retention benefit.
+Expiry dates are visible in the HRIS balance view from January onward.
+
+HR-207 Section 4.5 - Payout on Termination
+On voluntary termination, unused carried-over days are paid at 100% of the base daily rate for Regular and Senior employees.
+Probationary employees receive payout at 50% of the base daily rate.
+On involuntary termination for cause, carried-over balances are forfeited.
+Payouts are processed with the final paycheck within 30 days.
+Resignation without the contractual notice period reduces payout to 50% for all employee types.
+
+HR-207 Section 4.6 - Negative Balance
+Employees may borrow up to 5 vacation days ahead of accrual with manager approval.
+Borrowing is not permitted during the first 6 months of employment.
+Negative balances must be repaid within 6 months through accrual.
+Any remaining negative balance at separation is deducted from the final paycheck.
+
+HR-207 Section 4.7 - Part-time Rule
+Part-time employees working fewer than 40 hours per week are not full-time and therefore are not eligible for carry-over under this policy.
+Interns and contingent workers are excluded from carry-over regardless of scheduled hours.
+Seasonal workers are treated as part-time for the purposes of this policy.
+
+HR-207 Section 4.8 - Approval Procedure
+Carry-over requests must be submitted in the HRIS by December 15 of the current year.
+Managers must approve or deny requests within 5 business days of submission.
+January usage of carried-over days is auto-approved when the carry-over request was previously approved.
+Requests submitted after the deadline are auto-denied unless the HR business partner grants an exception.
+Disputes are escalated to the regional HR business partner within 10 business days.
+
+HR-207 Section 4.9 - Policy Exceptions
+The regional HR business partner may grant exceptions of up to 5 additional carry-over days per employee per year.
+Exceptions must be documented in the HRIS with a business justification.
+All exceptions are reviewed in the annual policy audit each February.
