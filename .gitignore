@@ -8,3 +8,6 @@ __pycache__/
 # Derived RAG artifacts — reproducible via `python cli.py ingest`
 chroma_db/
 storage/
+/venv
+/.claude
+/__pycache__
