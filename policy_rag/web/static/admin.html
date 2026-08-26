@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin &mdash; HR-207 Policy Assistant</title>
+  <meta name="description" content="Operator console: index rebuilds, retrieval and answer-quality metrics, trace log." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0d0f14; --surface:#141720; --card:#1b1e2b; --border:rgba(255,255,255,0.07);
+      --border-hi:rgba(129,140,248,0.4); --text:#dde1f0; --muted:#8892a8; --dim:#4e566a;
+      --accent:#818cf8; --accent-dk:#6366f1; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { font-size:14px; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0 1.5rem; height:52px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+    .logo { font-size:0.875rem; font-weight:600; color:var(--accent); display:flex; align-items:center; gap:0.5rem; }
+    .logo small { color:var(--muted); font-weight:500; }
+    .back { font-size:0.78rem; color:var(--muted); border:1px solid var(--border); border-radius:7px; padding:0.32rem 0.75rem; }
+    .back:hover { color:var(--text); border-color:var(--border-hi); text-decoration:none; }
+
+    main { max-width:1180px; margin:0 auto; padding:1.5rem 1.5rem 4rem; }
+    .section { margin-bottom:2rem; }
+    .section-head { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:0.85rem; }
+    h2 { font-size:0.95rem; font-weight:600; }
+    .section-note { font-size:0.75rem; color:var(--muted); }
+
+    .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.15rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr)); gap:0.75rem; }
+    .stat-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.45rem; }
+    .stat-value { font-size:1.05rem; font-weight:600; word-break:break-word; }
+    .stat-sub { font-size:0.72rem; color:var(--dim); margin-top:0.3rem; line-height:1.5; word-break:break-all; }
+
+    .kv { display:flex; justify-content:space-between; gap:0.75rem; font-size:0.75rem; padding:0.22rem 0; border-bottom:1px dotted var(--border); }
+    .kv:last-child { border-bottom:none; }
+    .kv span:first-child { color:var(--muted); }
+    .kv span:last-child { font-family:'JetBrains Mono',monospace; text-align:right; word-break:break-all; }
+
+    .btn { border:none; border-radius:8px; padding:0.55rem 1rem; font-family:inherit; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+    .btn-primary { background:var(--accent-dk); color:#fff; }
+    .btn-primary:hover:not(:disabled) { background:var(--accent); }
+    .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+    .btn-secondary:hover:not(:disabled) { border-color:var(--border-hi); }
+    .btn-danger { background:rgba(248,113,113,0.1); color:var(--red); border:1px solid rgba(248,113,113,0.3); }
+    .btn-danger:hover:not(:disabled) { background:rgba(248,113,113,0.18); }
+    .btn:disabled { opacity:0.45; cursor:not-allowed; }
+    .btn .spin { display:none; }
+    .btn.loading .spin { display:inline-block; }
+    .btn.loading .label { display:none; }
+    .spin { width:11px; height:11px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:-1px; }
+    @keyframes spin { to { transform:rotate(360deg) } }
+    .actions { display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center; }
+    .cost { font-size:0.68rem; color:var(--dim); }
+
+    .note { border-radius:8px; padding:0.65rem 0.9rem; font-size:0.78rem; line-height:1.6; margin-bottom:0.85rem; }
+    .note-info { background:rgba(129,140,248,0.06); border:1px solid rgba(129,140,248,0.18); color:var(--muted); }
+    .note-warn { background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); color:var(--yellow); }
+    .note-err  { background:rgba(248,113,113,0.06); border:1px solid rgba(248,113,113,0.22); color:var(--red); }
+
+    table { width:100%; border-collapse:collapse; font-size:0.775rem; }
+    th { text-align:left; font-size:0.63rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); padding:0.4rem 0.5rem; border-bottom:1px solid var(--border); }
+    td { padding:0.42rem 0.5rem; border-bottom:1px solid var(--border); vertical-align:top; }
+    tr:last-child td { border-bottom:none; }
+    .qid { font-family:'JetBrains Mono',monospace; color:var(--accent); font-size:0.72rem; white-space:nowrap; }
+
+    .tag { display:inline-flex; align-items:center; padding:0.08rem 0.42rem; border-radius:5px; font-size:0.63rem; font-weight:700; }
+    .tag-ok { background:rgba(52,211,153,0.13); color:var(--green); }
+    .tag-warn { background:rgba(251,191,36,0.13); color:var(--yellow); }
+    .tag-err { background:rgba(248,113,113,0.13); color:var(--red); }
+    .tag-dim { background:rgba(255,255,255,0.05); color:var(--muted); }
+    .tag-info { background:rgba(129,140,248,0.13); color:var(--accent); }
+
+    .metric { padding:0.7rem 0.85rem; }
+    .metric-label { font-size:0.63rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.3rem; }
+    .metric-values { display:flex; align-items:baseline; gap:0.4rem; font-family:'JetBrains Mono',monospace; }
+    .metric-before { color:var(--dim); }
+    .metric-after { font-size:1.1rem; font-weight:600; }
+    .delta { font-size:0.7rem; font-family:'JetBrains Mono',monospace; margin-top:0.2rem; }
+    .delta.pos { color:var(--green); } .delta.neg { color:var(--red); } .delta.zero { color:var(--dim); }
+
+    .out { margin-top:0.9rem; }
+    .out:empty { display:none; }
+    .log { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.7rem 0.85rem; font-family:'JetBrains Mono',monospace; font-size:0.73rem; line-height:1.65; white-space:pre-wrap; word-break:break-word; max-height:260px; overflow-y:auto; }
+    .scroll { max-height:420px; overflow-y:auto; }
+    .scroll::-webkit-scrollbar, .log::-webkit-scrollbar { width:5px; }
+    .scroll::-webkit-scrollbar-thumb, .log::-webkit-scrollbar-thumb { background:var(--dim); border-radius:3px; }
+    .sub { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media (max-width:820px) { .sub { grid-template-columns:1fr } }
+    .trace { border:1px solid var(--border); border-radius:8px; margin-bottom:0.4rem; background:var(--card); }
+    .trace-head { display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.7rem; cursor:pointer; }
+    .trace-head:hover { background:var(--surface); }
+    .trace-q { flex:1; font-size:0.78rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .trace-body { display:none; padding:0.7rem; border-top:1px solid var(--border); background:var(--surface); font-size:0.75rem; line-height:1.6; }
+    .trace.open .trace-body { display:block; }
+    .checkbox { display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; color:var(--muted); }
+    .checkbox input { accent-color:var(--accent); }
+    select { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:7px; font-family:inherit; font-size:0.75rem; padding:0.35rem 0.5rem; outline:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">&#9881; Admin <small>&mdash; HR-207 Policy Assistant</small></div>
+  <a class="back" href="/">&larr; Back to chat</a>
+</header>
+
+<main>
+
+  <!-- ── status ───────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-head">
+      <h2>System status</h2>
+      <button class="btn btn-secondary" id="refresh-btn" onclick="loadStatus()">
+        <span class="label">Refresh</span><span class="spin"></span>
+      </button>
+    </div>
+    <div id="warnings"></div>
+    <div class="grid" id="status-grid">
+      <div class="card"><div class="stat-label">Loading</div><div class="stat-value">&hellip;</div></div>
+    </div>
+  </div>
+
+  <!-- ── index ────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Index</h2>
+      <span class="section-note">Embeddings go to whichever backend is configured above.</span>
+    </div>
+    <div class="note note-warn">
+      A rebuild deletes the current embeddings and re-embeds every chunk. It loads the
+      embedding model first, so allow a few minutes on a cold start &mdash; keep this tab open.
+    </div>
+    <div class="card">
+      <div class="actions">
+        <button class="btn btn-secondary" id="corpus-btn" onclick="regenerateCorpus()">
+          <span class="label">Regenerate corpus</span><span class="spin"></span>
+        </button>
+        <button class="btn btn-primary" id="ingest-btn" onclick="rebuildIndex()">
+          <span class="label">Rebuild index</span><span class="spin"></span>
+        </button>
+        <label class="checkbox"><input type="checkbox" id="ingest-keep" /> append instead of rebuilding</label>
+      </div>
+      <div class="out" id="index-out"></div>
+    </div>
+  </div>
+
+  <!-- ── metrics ──────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Metrics</h2>
+      <span class="section-note">Retrieval and generation fail differently, so they are measured separately.</span>
+    </div>
+
+    <div class="sub" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="stat-label">Chunking bake-off</div>
+        <p class="section-note" style="margin-bottom:0.7rem;line-height:1.6">
+          Naive line-splitting vs structure-aware sectioning, scored on hit-in-top-5 over the
+          eight known-answer questions. Reads the corpus from disk.
+        </p>
+        <div class="actions">
+          <button class="btn btn-secondary" id="chunk-btn" onclick="runChunking()">
+            <span class="label">Run</span><span class="spin"></span>
+          </button>
+          <span class="cost">no LLM calls &middot; seconds</span>
+        </div>
+        <div class="out" id="chunk-out"></div>
+      </div>
+
+      <div class="card">
+        <div class="stat-label">Retrieval benchmark</div>
+        <p class="section-note" style="margin-bottom:0.7rem;line-height:1.6">
+          Vector-only vs hybrid (BM25 + RRF): hit-rate@1, hit-rate@3 and MRR, with
+          region-explicit and exact-term questions reported separately.
+        </p>
+        <div class="actions">
+          <button class="btn btn-secondary" id="retr-btn" onclick="runRetrieval()">
+            <span class="label">Run</span><span class="spin"></span>
+          </button>
+          <span class="cost">no LLM calls &middot; ~1 min</span>
+        </div>
+        <div class="out" id="retr-out"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stat-label">Answer quality</div>
+      <p class="section-note" style="margin-bottom:0.7rem;line-height:1.6">
+        Runs the 20-question golden suite through the same answer path the chat UI uses, labels
+        every trace, ranks problem types by frequency &times; severity, and ends on one prediction
+        card: the single change to make next and what it will not fix.
+      </p>
+      <div class="actions">
+        <button class="btn btn-primary" id="qual-btn" onclick="runQuality()">
+          <span class="label">Run suite</span><span class="spin"></span>
+        </button>
+        <button class="btn btn-secondary" id="qual-load-btn" onclick="loadQuality()">
+          <span class="label">Load last run</span><span class="spin"></span>
+        </button>
+        <button class="btn btn-secondary" id="smoke-btn" onclick="runSmoke()">
+          <span class="label">Smoke checks</span><span class="spin"></span>
+        </button>
+        <span class="cost">suite: 20 LLM calls, several minutes &middot; smoke: 3 calls</span>
+      </div>
+      <div class="out" id="qual-out"></div>
+    </div>
+  </div>
+
+  <!-- ── traces ───────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Traces</h2>
+      <span class="section-note">Every answer, from the chat UI, the CLI or an evaluation run.</span>
+    </div>
+    <div class="card">
+      <div class="actions" style="margin-bottom:0.5rem">
+        <button class="btn btn-secondary" id="traces-btn" onclick="loadTraces()">
+          <span class="label">Load</span><span class="spin"></span>
+        </button>
+        <select id="trace-source" onchange="loadTraces()">
+          <option value="">All traces</option>
+          <option value="chat">Live chat only</option>
+          <option value="evaluation">Evaluation runs only</option>
+        </select>
+        <button class="btn btn-danger" id="clear-btn" onclick="clearTraces()">
+          <span class="label">Clear log</span><span class="spin"></span>
+        </button>
+      </div>
+      <div class="out" id="traces-out"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const esc = s => (s ?? '').toString()
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function busy(id, on) {
+  const b = document.getElementById(id);
+  if (b) { b.disabled = on; b.classList.toggle('loading', on); }
+}
+
+async function call(path, options) {
+  const res = await fetch(path, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || res.statusText);
+  return data;
+}
+
+const post = (path, body) => call(path, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body || {})
+});
+
+function fail(id, err) {
+  document.getElementById(id).innerHTML =
+    `<div class="note note-err" style="margin:0">${esc(err.message)}</div>`;
+}
+
+function kv(pairs) {
+  return pairs.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${esc(v)}</span></div>`).join('');
+}
+
+// ── status ────────────────────────────────────────────────────
+async function loadStatus() {
+  busy('refresh-btn', true);
+  try {
+    const s = await call('/api/admin/status');
+    const vs = s.vector_store, ds = s.docstore;
+
+    document.getElementById('warnings').innerHTML = (s.warnings || [])
+      .map(w => `<div class="note note-warn">${esc(w)}</div>`).join('');
+
+    const cloud = vs.backend === 'cloud';
+    document.getElementById('status-grid').innerHTML = `
+      <div class="card">
+        <div class="stat-label">Vector store</div>
+        <div class="stat-value">${cloud ? 'Chroma Cloud' : 'Local'}
+          ${vs.ready ? '<span class="tag tag-ok">READY</span>' : '<span class="tag tag-err">NOT READY</span>'}</div>
+        <div class="stat-sub">${esc(vs.location)}</div>
+        <div style="margin-top:0.6rem">${kv([
+          ['collection', vs.collection],
+          ['embedded chunks', vs.embedded_chunks < 0 ? 'unreadable' : vs.embedded_chunks],
+          ...(cloud ? [
+            ['tenant', vs.tenant || 'not set'],
+            ['database', vs.database || 'not set'],
+            ['credentials', vs.credentials_configured ? 'configured' : 'missing: ' + vs.missing_credentials.join(', ')]
+          ] : [])
+        ])}</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Docstore <span class="tag tag-dim">ALWAYS LOCAL</span></div>
+        <div class="stat-value">${ds.nodes < 0 ? '—' : ds.nodes} nodes</div>
+        <div class="stat-sub">${esc(ds.path)}</div>
+        <div style="margin-top:0.6rem">${kv([
+          ['exists', ds.exists],
+          ['used by', 'auto-merging + BM25']
+        ])}</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Corpus</div>
+        <div class="stat-value">${s.corpus.count} documents</div>
+        <div class="stat-sub">${esc(s.corpus.path)}</div>
+        <div style="margin-top:0.6rem">${kv(s.corpus.files.map(f => [f, 'ok']))}</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Models</div>
+        <div class="stat-value">${esc((s.models.llm || '').split('/').pop())}
+          ${s.models.mocked ? '<span class="tag tag-warn">MOCK</span>' : '<span class="tag tag-ok">LIVE</span>'}</div>
+        <div class="stat-sub">${esc(s.models.embed)}</div>
+        <div style="margin-top:0.6rem">${kv([
+          ['hybrid default', s.retrieval.hybrid_default],
+          ['top_k default', s.retrieval.top_k_default],
+          ['eval pause', s.evaluation.pause_seconds + ' s']
+        ])}</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Traces</div>
+        <div class="stat-value">${s.traces.total} recorded</div>
+        <div class="stat-sub">${esc(s.traces.path)}</div>
+        <div style="margin-top:0.6rem">${kv([
+          ...Object.entries(s.traces.by_source),
+          ['latest eval run', s.traces.latest_evaluation_run || 'none']
+        ])}</div>
+      </div>`;
+  } catch (err) {
+    document.getElementById('status-grid').innerHTML =
+      `<div class="note note-err">Could not load status: ${esc(err.message)}</div>`;
+  } finally {
+    busy('refresh-btn', false);
+  }
+}
+
+// ── index ─────────────────────────────────────────────────────
+async function regenerateCorpus() {
+  busy('corpus-btn', true);
+  try {
+    const r = await post('/api/admin/corpus');
+    document.getElementById('index-out').innerHTML =
+      `<div class="note note-info" style="margin:0">Wrote ${r.count} corpus files.</div>
+       <div class="log" style="margin-top:0.5rem">${r.written.map(esc).join('\n')}</div>`;
+    loadStatus();
+  } catch (err) { fail('index-out', err); }
+  finally { busy('corpus-btn', false); }
+}
+
+async function rebuildIndex() {
+  const keep = document.getElementById('ingest-keep').checked;
+  if (!keep && !confirm('Rebuild the index?\n\nThis deletes the current embeddings and re-embeds every chunk. It can take several minutes.')) return;
+  busy('ingest-btn', true);
+  document.getElementById('index-out').innerHTML =
+    `<div class="note note-info" style="margin:0">Running &mdash; loading the embedding model and embedding every chunk. Keep this tab open.</div>`;
+  try {
+    const r = await post('/api/admin/ingest', { keep, confirm: true });
+    document.getElementById('index-out').innerHTML =
+      `<div class="note note-info" style="margin:0">Index ${r.mode === 'append' ? 'appended' : 'rebuilt'} &mdash; ${esc(r.vector_store)}</div>
+       <div class="log" style="margin-top:0.5rem">documents : ${r.summary.documents}
+total nodes: ${r.summary.total_nodes}
+leaf nodes : ${r.summary.leaf_nodes}</div>`;
+    loadStatus();
+  } catch (err) { fail('index-out', err); }
+  finally { busy('ingest-btn', false); }
+}
+
+// ── chunking ──────────────────────────────────────────────────
+async function runChunking() {
+  busy('chunk-btn', true);
+  try {
+    const d = await post('/api/evaluation/chunking');
+    const demo = d.filter_demo;
+    document.getElementById('chunk-out').innerHTML = `
+      <div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:0.7rem">
+        <div class="card metric"><div class="metric-label">Naive</div>
+          <div class="metric-values"><span class="metric-after">${d.naive_hits}/${d.total}</span></div></div>
+        <div class="card metric"><div class="metric-label">Structure-aware</div>
+          <div class="metric-values"><span class="metric-after" style="color:var(--green)">${d.structure_hits}/${d.total}</span></div></div>
+      </div>
+      <table><thead><tr><th>ID</th><th>Expected section</th><th>Naive</th><th>Structure</th></tr></thead><tbody>
+        ${d.per_question.map(q => `<tr>
+          <td class="qid">${esc(q.id)}</td>
+          <td style="font-size:0.72rem;color:var(--muted)">${esc(q.expected_section)}</td>
+          <td>${q.naive_hit ? '<span class="tag tag-ok">HIT</span>' : '<span class="tag tag-err">MISS</span>'}</td>
+          <td>${q.structure_hit ? '<span class="tag tag-ok">HIT</span>' : '<span class="tag tag-err">MISS</span>'}</td>
+        </tr>`).join('')}
+      </tbody></table>
+      <div class="stat-label" style="margin-top:0.9rem">Metadata filtering &mdash; same query, region filter off then on</div>
+      <div class="log">${esc(demo.query)}
+
+unfiltered:
+${demo.unfiltered.slice(0,2).map(r => '  ' + r.score.toFixed(4) + '  ' + r.chunk.region.padEnd(6) + ' ' + r.chunk.chunk_id).join('\n')}
+
+region=${esc(demo.region)}:
+${demo.filtered.slice(0,2).map(r => '  ' + r.score.toFixed(4) + '  ' + r.chunk.region.padEnd(6) + ' ' + r.chunk.chunk_id).join('\n')}</div>`;
+  } catch (err) { fail('chunk-out', err); }
+  finally { busy('chunk-btn', false); }
+}
+
+// ── retrieval ─────────────────────────────────────────────────
+function metricCard(label, before, after) {
+  const d = after - before;
+  const cls = d > 0 ? 'pos' : d < 0 ? 'neg' : 'zero';
+  return `<div class="card metric">
+    <div class="metric-label">${label}</div>
+    <div class="metric-values">
+      <span class="metric-before">${before.toFixed(3)}</span><span class="metric-before">&rarr;</span>
+      <span class="metric-after">${after.toFixed(3)}</span>
+    </div>
+    <div class="delta ${cls}">${d >= 0 ? '+' : ''}${d.toFixed(4)}</div>
+  </div>`;
+}
+
+async function runRetrieval() {
+  busy('retr-btn', true);
+  document.getElementById('retr-out').innerHTML =
+    `<div class="note note-info" style="margin:0">Building both retrievers&hellip; first run loads the embedding model.</div>`;
+  try {
+    const d = await post('/api/evaluation/retrieval');
+    const set = k => {
+      const b = d.metrics[k].before, a = d.metrics[k].after;
+      return metricCard('hit@1', b.hit1, a.hit1) + metricCard('hit@3', b.hit3, a.hit3) + metricCard('MRR', b.mrr, a.mrr);
+    };
+    document.getElementById('retr-out').innerHTML = `
+      <div class="stat-label">Region named in the query</div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.7rem">${set('core')}</div>
+      <div class="stat-label">Exact-term / no region named</div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.7rem">${set('hard')}</div>
+      <div class="scroll"><table><thead><tr><th>ID</th><th>Question</th><th>Before</th><th>After</th><th>Status</th></tr></thead><tbody>
+        ${d.comparison.map(r => {
+          if (r.ambiguous) return `<tr><td class="qid">${esc(r.id)}</td>
+            <td style="font-size:0.73rem">${esc(r.query)}</td>
+            <td colspan="3"><span class="tag tag-dim">AMBIGUOUS</span> ${esc(r.note)}</td></tr>`;
+          const st = r.newly_fixed ? '<span class="tag tag-ok">FIXED</span>'
+            : r.still_failing ? '<span class="tag tag-err">FAILING</span>'
+            : r.rank_improved ? '<span class="tag tag-ok">IMPROVED</span>'
+            : r.rank_regressed ? '<span class="tag tag-warn">REGRESSED</span>'
+            : '<span class="tag tag-dim">UNCHANGED</span>';
+          const rk = v => v === null ? '<span style="color:var(--dim)">—</span>' : '#' + v;
+          return `<tr><td class="qid">${esc(r.id)}</td>
+            <td style="font-size:0.73rem">${esc(r.query)}</td>
+            <td class="mono">${rk(r.before.rank)}</td><td class="mono">${rk(r.after.rank)}</td><td>${st}</td></tr>`;
+        }).join('')}
+      </tbody></table></div>`;
+  } catch (err) { fail('retr-out', err); }
+  finally { busy('retr-btn', false); }
+}
+
+// ── answer quality ────────────────────────────────────────────
+function sevDots(sev) {
+  let h = '<span class="mono" style="letter-spacing:1px">';
+  for (let i = 1; i <= 5; i++) h += i <= sev ? '●' : '○';
+  return h + '</span>';
+}
+
+function renderQuality(d) {
+  const p = d.prediction;
+  document.getElementById('qual-out').innerHTML = `
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.8rem">
+      <div class="card metric"><div class="metric-label">Traces</div>
+        <div class="metric-values"><span class="metric-after">${d.summary.total}</span></div></div>
+      <div class="card metric"><div class="metric-label">Failures</div>
+        <div class="metric-values"><span class="metric-after" style="color:var(--red)">${d.summary.bugs}</span></div></div>
+      <div class="card metric"><div class="metric-label">Clean</div>
+        <div class="metric-values"><span class="metric-after" style="color:var(--green)">${d.summary.ok}</span></div></div>
+    </div>
+    <table style="margin-bottom:0.9rem"><thead><tr><th>Priority</th><th>Category</th><th>Count</th><th>Severity</th><th>Score</th></tr></thead><tbody>
+      ${(() => { let rank = 1; return d.taxonomy.map(r => `<tr>
+        <td>${r.severity === 0 ? '<span style="color:var(--dim)">—</span>' : '<span style="color:var(--red);font-weight:700">#' + (rank++) + '</span>'}</td>
+        <td>${esc(r.display)}</td><td style="font-weight:600">${r.count}</td>
+        <td>${sevDots(r.severity)}</td><td class="mono">${r.score}</td></tr>`).join(''); })()}
+    </tbody></table>
+    ${p ? `<div class="card" style="border-color:var(--border-hi)">
+      <div class="stat-label" style="color:var(--accent)">Prediction card &mdash; the one change to make next</div>
+      ${[['Problem', `${esc(p.display)} — ${p.count}/${p.total} traces, severity ${p.severity}/5`],
+         ['Root cause', esc(p.cause)], ['One change', esc(p.change)],
+         ['Prediction', esc(p.prediction)], ['Will not fix', esc(p.will_not_fix)]]
+        .map(([k, v]) => `<div style="margin-top:0.55rem">
+          <div class="stat-label" style="margin-bottom:0.15rem">${k}</div>
+          <div style="font-size:0.79rem;line-height:1.6">${v}</div></div>`).join('')}
+    </div>` : `<div class="note note-info" style="margin:0">No failures &mdash; every trace was a correct answer or a correct refusal.</div>`}
+    <div class="scroll" style="margin-top:0.8rem">
+      ${d.traces.map(t => traceCard(t)).join('')}
+    </div>`;
+}
+
+async function runQuality() {
+  if (!confirm('Run the full 20-question suite?\n\nThis spends 20 LLM calls and is paced to stay under the rate limit, so it takes several minutes.')) return;
+  busy('qual-btn', true); busy('qual-load-btn', true);
+  document.getElementById('qual-out').innerHTML =
+    `<div class="note note-info" style="margin:0">Running 20 questions through the live assistant. Traces are written as they complete, so an interrupted run is still readable from &ldquo;Load last run&rdquo;.</div>`;
+  try { renderQuality(await post('/api/evaluation/quality')); }
+  catch (err) { fail('qual-out', err); }
+  finally { busy('qual-btn', false); busy('qual-load-btn', false); }
+}
+
+async function loadQuality() {
+  busy('qual-load-btn', true);
+  try { renderQuality(await call('/api/evaluation/quality')); }
+  catch (err) { fail('qual-out', err); }
+  finally { busy('qual-load-btn', false); }
+}
+
+async function runSmoke() {
+  busy('smoke-btn', true);
+  try {
+    const d = await post('/api/evaluation/smoke');
+    document.getElementById('qual-out').innerHTML = `
+      <div class="note ${d.passed === d.total ? 'note-info' : 'note-err'}" style="margin:0 0 0.6rem">
+        Smoke checks: ${d.passed}/${d.total} passed</div>
+      <table><thead><tr><th>ID</th><th>Question</th><th>Label</th><th>Result</th></tr></thead><tbody>
+        ${d.results.map(r => `<tr>
+          <td class="qid">${esc(r.id)}</td>
+          <td style="font-size:0.73rem">${esc(r.query)}</td>
+          <td><span class="tag tag-info">${esc(r.label)}</span></td>
+          <td>${r.passed ? '<span class="tag tag-ok">PASS</span>' : '<span class="tag tag-err">FAIL</span>'}</td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch (err) { fail('qual-out', err); }
+  finally { busy('smoke-btn', false); }
+}
+
+// ── traces ────────────────────────────────────────────────────
+let traceSeq = 0;
+function traceCard(t) {
+  const id = 'tr-' + (traceSeq++);
+  const cls = { CORRECT:'tag-ok', CORRECT_REFUSAL:'tag-info', UNLABELED:'tag-dim',
+    RETRIEVAL_FAILURE:'tag-err', GENERATION_FAILURE:'tag-warn', PIPELINE_ERROR:'tag-err' };
+  return `<div class="trace" id="${id}">
+    <div class="trace-head" onclick="document.getElementById('${id}').classList.toggle('open')">
+      <span class="qid">${esc(t.golden_id || t.trace_id)}</span>
+      <span class="tag ${cls[t.label] || 'tag-dim'}">${esc((t.label || '').replace(/_/g,' '))}</span>
+      <span class="trace-q">${esc(t.query)}</span>
+      <span style="font-size:0.7rem;color:var(--muted)">${esc(t.region || 'no filter')}</span>
+    </div>
+    <div class="trace-body">
+      ${kv([['source', t.source], ['refusal', t.is_refusal], ['retrieval ok', t.retrieval_ok],
+            ['expected', t.expected_type || '—'], ['expected source', t.expected_source || '—'],
+            ['latency', t.latency_ms + ' ms'], ['sources', (t.top_sources || []).join(', ') || '—']])}
+      <div style="margin-top:0.5rem"><strong>Observation:</strong> ${esc(t.observation)}</div>
+      <div class="log" style="margin-top:0.5rem">${esc((t.answer || '(no answer)').slice(0, 400))}</div>
+      ${t.error ? `<div class="note note-err" style="margin:0.5rem 0 0">${esc(t.error.slice(0,220))}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+async function loadTraces() {
+  busy('traces-btn', true);
+  try {
+    const src = document.getElementById('trace-source').value;
+    const d = await call('/api/traces?limit=100' + (src ? '&source=' + src : ''));
+    document.getElementById('traces-out').innerHTML = d.traces.length
+      ? `<div class="note note-info" style="margin:0 0 0.6rem">${d.summary.total} traces &middot;
+           ${d.summary.bugs} failures &middot; ${d.summary.ok} clean</div>
+         <div class="scroll">${d.traces.slice().reverse().map(traceCard).join('')}</div>`
+      : `<div class="note note-info" style="margin:0">No traces yet.</div>`;
+  } catch (err) { fail('traces-out', err); }
+  finally { busy('traces-btn', false); }
+}
+
+async function clearTraces() {
+  if (!confirm('Delete every stored trace?\n\nThis is the only record of what the assistant has been asked and how it answered.')) return;
+  busy('clear-btn', true);
+  try {
+    const r = await call('/api/traces', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true })
+    });
+    document.getElementById('traces-out').innerHTML =
+      `<div class="note note-info" style="margin:0">Removed ${r.removed} traces.</div>`;
+    loadStatus();
+  } catch (err) { fail('traces-out', err); }
+  finally { busy('clear-btn', false); }
+}
+
+loadStatus();
+</script>
+</body>
+</html>

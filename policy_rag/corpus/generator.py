@@ -1,8 +1,8 @@
 """Generates the synthetic HR-207 policy addendum corpus.
 
 Writes one ``data/addendum_<REGION>.txt`` file per region. The on-disk format
-is a strict contract consumed by ``chunker.py`` (structure-aware chunker) and
-``ingest.py`` (metadata extractor):
+is a strict contract consumed by ``policy_rag.corpus.chunking`` (structure-aware
+chunker) and ``policy_rag.indexing.pipeline`` (metadata extractor):
 
 - Line 1: ``Region: <CODE>``
 - Line 2: ``Effective Date: <YYYY-MM-DD>``
@@ -16,6 +16,8 @@ reimbursement content, and sabbatical sections outside EMEA/UK.
 """
 
 import os
+
+from policy_rag import config
 
 DOCS = {
     "addendum_NA.txt": """Region: NA
@@ -395,16 +397,17 @@ All exceptions are reviewed in the annual policy audit each May.
 }
 
 
-def write_corpus(data_dir: str = "data") -> list:
+def write_corpus(data_dir: str = None) -> list:
     """Writes every addendum in ``DOCS`` to ``data_dir``.
 
     Args:
         data_dir: Target directory for the generated ``addendum_*.txt`` files.
-            Created if it does not exist.
+            Defaults to ``config.DATA_DIR``. Created if it does not exist.
 
     Returns:
         Sorted list of file paths that were written.
     """
+    data_dir = str(data_dir or config.DATA_DIR)
     os.makedirs(data_dir, exist_ok=True)
     written = []
     for fname, content in DOCS.items():

@@ -1,13 +1,23 @@
-# Secrets — never commit API keys
+# Secrets - never commit API keys
 .env
 
 # Python artifacts
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
 
-# Derived RAG artifacts — reproducible via `python cli.py ingest`
+# Derived RAG artifacts - reproducible via `policy-rag ingest`
 chroma_db/
 storage/
-/venv
-/.claude
-/__pycache__
+
+# Runtime state and generated reports
+var/
+reports/
+
+# Local environments and tooling
+venv/
+.venv/
+.claude/

@@ -1,31 +1,28 @@
-"""Ingestion pipeline for the HR-207 policy RAG index.
+"""Builds the search index the assistant answers from.
 
-Reads the addenda from ``data/``, parses them into a hierarchical node tree
-(parent/child chunks), embeds the leaf nodes with a local HuggingFace model
-into ChromaDB, and persists the docstore that ``AutoMergingRetriever`` needs
-at query time to merge child hits back into parent context.
+Reads the addenda in ``config.DATA_DIR``, parses them into a hierarchical node
+tree (parent sections, child chunks), embeds the leaf nodes into the configured
+vector store, and persists the docstore that ``AutoMergingRetriever`` needs at
+query time to merge child hits back into their parent's context.
 
-Artifacts produced:
-- ``./chroma_db``   — ChromaDB persistent store, collection ``hr_policies``
-- ``./storage``     — llama-index docstore/index store (all nodes)
+Artifacts produced (both derived — always reproducible from ``data/``):
+
+- the vector store  — embeddings for every leaf node, written to whichever
+                      backend ``policy_rag.vector_store`` resolves (a local
+                      ``chroma_db/`` directory by default, or Chroma Cloud)
+- ``config.STORAGE_DIR`` — llama-index docstore / index store (all nodes), always
+                      local: auto-merging and BM25 both read from it
 """
 
 import os
 import shutil
 
-import chromadb
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, Settings
+from llama_index.core import Settings, SimpleDirectoryReader, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
-DATA_DIR = "data"
-CHROMA_DIR = "./chroma_db"
-STORAGE_DIR = "./storage"
-COLLECTION_NAME = "hr_policies"
-EMBED_MODEL_NAME = "BAAI/bge-small-en-v1.5"
-CHUNK_SIZES = [512, 128]
-CHUNK_OVERLAP = 20
+from policy_rag import config
+from policy_rag import vector_store as vector_store_backend
 
 
 def extract_metadata(filepath: str) -> dict:
@@ -39,11 +36,10 @@ def extract_metadata(filepath: str) -> dict:
         Metadata dict with ``region``, ``effective_date``, ``policy_id`` and
         ``source_file`` keys; ``"unknown"`` for headers that are not found.
     """
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        region = "unknown"
-        effective_date = "unknown"
-        for line in lines:
+    region = "unknown"
+    effective_date = "unknown"
+    with open(filepath, "r", encoding="utf-8") as handle:
+        for line in handle:
             if line.startswith("Region:"):
                 region = line.split(":", 1)[1].strip()
             elif line.startswith("Effective Date:"):
@@ -57,10 +53,10 @@ def extract_metadata(filepath: str) -> dict:
 
 
 def run_ingestion(fresh: bool = True) -> dict:
-    """Builds the vector index and docstore from the ``data/`` corpus.
+    """Builds the vector index and docstore from the corpus.
 
     Args:
-        fresh: When True (default), deletes ``./chroma_db`` and ``./storage``
+        fresh: When True (default), clears the existing embeddings and docstore
             before rebuilding so repeated ingestion is idempotent and never
             duplicates nodes. When False, nodes are appended to the existing
             stores.
@@ -68,20 +64,21 @@ def run_ingestion(fresh: bool = True) -> dict:
     Returns:
         Summary dict with ``documents``, ``total_nodes`` and ``leaf_nodes``.
     """
+    print(f"Vector store: {vector_store_backend.describe()}")
+
     if fresh:
         # Both stores are derived artifacts; wiping them makes re-ingestion
         # reproducible instead of appending duplicate nodes with fresh ids.
-        for path in (CHROMA_DIR, STORAGE_DIR):
-            shutil.rmtree(path, ignore_errors=True)
+        vector_store_backend.reset()
+        shutil.rmtree(config.STORAGE_DIR, ignore_errors=True)
 
     print("Initializing embedding model...")
-    embed_model = HuggingFaceEmbedding(model_name=EMBED_MODEL_NAME)
-    Settings.embed_model = embed_model
+    Settings.embed_model = HuggingFaceEmbedding(model_name=config.EMBED_MODEL_NAME)
     Settings.llm = None  # No LLM is needed for ingestion.
 
     print("Loading documents...")
     reader = SimpleDirectoryReader(
-        input_dir=DATA_DIR,
+        input_dir=str(config.DATA_DIR),
         file_extractor={},
         file_metadata=extract_metadata,
     )
@@ -89,40 +86,40 @@ def run_ingestion(fresh: bool = True) -> dict:
 
     print("Setting up hierarchical parser...")
     node_parser = HierarchicalNodeParser.from_defaults(
-        chunk_sizes=CHUNK_SIZES,
-        chunk_overlap=CHUNK_OVERLAP,
+        chunk_sizes=config.CHUNK_SIZES,
+        chunk_overlap=config.CHUNK_OVERLAP,
     )
-
     nodes = node_parser.get_nodes_from_documents(documents)
     leaf_nodes = get_leaf_nodes(nodes)
-
     print(f"Created {len(nodes)} total nodes and {len(leaf_nodes)} leaf (child) nodes.")
 
-    print("Connecting to ChromaDB and initializing storage context...")
-    db = chromadb.PersistentClient(path=CHROMA_DIR)
-    chroma_collection = db.get_or_create_collection(COLLECTION_NAME)
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+    print("Connecting to the vector store and initializing storage context...")
+    storage_context = StorageContext.from_defaults(
+        vector_store=vector_store_backend.get_vector_store()
+    )
     storage_context.docstore.add_documents(nodes)
 
     print("Indexing nodes into vector store...")
     # Constructing the index embeds every leaf node into the vector store;
     # the returned object itself is not needed afterwards.
-    VectorStoreIndex(
-        leaf_nodes,
-        storage_context=storage_context,
-    )
+    VectorStoreIndex(leaf_nodes, storage_context=storage_context)
 
-    # Persist the docstore (important for hierarchical retrieval).
-    storage_context.persist(persist_dir=STORAGE_DIR)
+    # Persisting the docstore is what makes auto-merging retrieval possible.
+    storage_context.persist(persist_dir=str(config.STORAGE_DIR))
+
+    # Any query engine cached in this process now points at a stale index.
+    from policy_rag.retrieval.engine import reset_engine_cache
+    reset_engine_cache()
 
     summary = {
         "documents": len(documents),
         "total_nodes": len(nodes),
         "leaf_nodes": len(leaf_nodes),
     }
-    print(f"Ingestion complete. ChromaDB at {CHROMA_DIR}, docstore at {STORAGE_DIR}. Summary: {summary}")
+    print(
+        f"Ingestion complete. Embeddings in {vector_store_backend.describe()}, "
+        f"docstore at {config.STORAGE_DIR}. Summary: {summary}"
+    )
     return summary
 
 

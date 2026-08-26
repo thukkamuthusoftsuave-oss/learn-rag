@@ -2,8 +2,11 @@ llama-index
 llama-index-vector-stores-chroma
 llama-index-embeddings-huggingface
 llama-index-llms-gemini
+llama-index-retrievers-bm25
+rank-bm25
 chromadb
 fastapi
 uvicorn
-python-dotenv
 pydantic
+python-dotenv
+scikit-learn
