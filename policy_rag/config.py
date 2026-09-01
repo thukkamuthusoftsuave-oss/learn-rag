@@ -71,7 +71,12 @@ CHROMA_DATABASE = os.getenv("CHROMA_DATABASE", "")
 # --- Models and index ------------------------------------------------------
 COLLECTION_NAME = os.getenv("RAG_COLLECTION", "hr_policies")
 EMBED_MODEL_NAME = os.getenv("RAG_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
-LLM_MODEL_NAME = os.getenv("RAG_LLM_MODEL", "models/gemini-flash-latest")
+# OpenRouter exposes providers through an OpenAI-compatible endpoint.  A model
+# slug is always ``provider/model`` and can be changed without touching code.
+LLM_MODEL_NAME = os.getenv("RAG_LLM_MODEL", "google/gemini-2.5-flash-lite")
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+LLM_CONTEXT_WINDOW = _env_int("RAG_LLM_CONTEXT_WINDOW", 32_768)
+LLM_MAX_TOKENS = _env_int("RAG_LLM_MAX_TOKENS", 512)
 CHUNK_SIZES = [512, 128]
 CHUNK_OVERLAP = 20
 
@@ -89,11 +94,10 @@ DEFAULT_HYBRID = _env_bool("RAG_HYBRID", True)
 MAX_HISTORY_TURNS = _env_int("RAG_MAX_HISTORY_TURNS", 6)
 
 # --- Evaluation pacing -----------------------------------------------------
-# The answer-quality suite fires one LLM call per question. Gemini's free tier
-# allows 5 requests per minute, so an unthrottled run turns into a page of 429s
-# and scores the rate limiter instead of the assistant. 13 s keeps a free key
-# under that ceiling; drop it to 1-2 s on a paid tier.
-EVAL_PAUSE_SECONDS = float(os.getenv("RAG_EVAL_PAUSE_SECONDS", "13"))
+# The answer-quality suite fires one LLM call per question. Keep this low for
+# paid OpenRouter models, but raise it when the selected model/key has a lower
+# request-per-minute ceiling. A rate limit is never an answer-quality result.
+EVAL_PAUSE_SECONDS = float(os.getenv("RAG_EVAL_PAUSE_SECONDS", "2"))
 EVAL_RETRIES = _env_int("RAG_EVAL_RETRIES", 2)
 
 # --- Server ----------------------------------------------------------------
@@ -140,9 +144,9 @@ CONDENSE_PROMPT_TEMPLATE = (
 REGIONS = ["NA", "US", "UK", "EMEA", "APAC", "LATAM"]
 
 
-def gemini_api_key() -> str:
-    """Returns the configured Gemini API key, or an empty string when unset."""
-    return os.getenv("GEMINI_API_KEY", "")
+def openrouter_api_key() -> str:
+    """Returns the configured OpenRouter API key, or an empty string when unset."""
+    return os.getenv("OPENROUTER_API_KEY", "")
 
 
 def ensure_runtime_dirs() -> None:

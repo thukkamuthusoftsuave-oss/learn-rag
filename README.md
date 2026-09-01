@@ -48,7 +48,7 @@ project exist to stop that, and each one is measured rather than asserted:
 
 ```powershell
 pip install -r requirements.txt      # or: pip install -e .
-copy .env.example .env               # then set GEMINI_API_KEY
+copy .env.example .env               # then set OPENROUTER_API_KEY
 
 python -m policy_rag corpus          # generate the corpus
 python -m policy_rag ingest          # build the index (wipes old stores; --keep to append)
@@ -95,12 +95,10 @@ to make next, what it should move, and what it will not fix. Rebuild that
 report from stored traces without spending any calls with
 `policy-rag eval quality --from-traces`.
 
-It paces itself at one question every 13 seconds (`RAG_EVAL_PAUSE_SECONDS`) to
-stay under a per-minute rate limit; set it to 1 on a paid tier. Pacing cannot
-help with a **daily** allowance, though: Gemini's free tier permits 20 requests
-per day per model, which the 20-question suite exhausts on its own. When that
-happens the run stops rather than recording the unasked questions as failures,
-and the report is marked as partial with how many were actually asked.
+It paces itself at one question every 2 seconds (`RAG_EVAL_PAUSE_SECONDS`).
+Raise that setting if your selected OpenRouter model or account has a lower
+per-minute ceiling. Pacing cannot help with a daily allowance; when a provider
+reports one, the run stops rather than recording unasked questions as failures.
 
 ```powershell
 pytest        # chunking, dataset integrity, taxonomy and trace-log tests
@@ -153,8 +151,8 @@ tests/                   model-free unit tests
 
 Everything is set in `.env` (see `.env.example`). The defaults that matter:
 `RAG_HYBRID=true` (hybrid retrieval is the shipped default), `RAG_TOP_K=5`,
-`RAG_LLM_MODEL=models/gemini-flash-latest`,
-`RAG_EMBED_MODEL=BAAI/bge-small-en-v1.5`. Without `GEMINI_API_KEY` the
+`RAG_LLM_MODEL=google/gemini-2.5-flash-lite`,
+`RAG_EMBED_MODEL=BAAI/bge-small-en-v1.5`. Without `OPENROUTER_API_KEY` the
 assistant falls back to a mock LLM and says so in every response and trace.
 
 ### Storing embeddings in the cloud
@@ -230,9 +228,11 @@ loads lazily on first use. Every later question is fast; query engines are
 cached per `(region, top_k, hybrid)`.
 
 **Answers come back empty, and the trace says `PIPELINE_ERROR ... 429`.** The
-Gemini free tier allows 5 requests/minute. Wait a minute, or raise
-`RAG_EVAL_PAUSE_SECONDS` before running `eval quality`. The failure is recorded
-in the trace rather than hidden behind an empty answer.
+selected OpenRouter model or account has hit a rate, credit, or daily limit.
+Check the OpenRouter activity page, wait if it is temporary, or select a model
+and account with sufficient available capacity. Raise `RAG_EVAL_PAUSE_SECONDS`
+before `eval quality` if it is a per-minute limit. The failure is recorded in
+the trace rather than hidden behind an empty answer.
 
 ## Further reading
 

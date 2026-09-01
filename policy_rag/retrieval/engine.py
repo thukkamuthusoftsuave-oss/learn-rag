@@ -22,13 +22,14 @@ question. ``reset_engine_cache`` clears the cache after re-ingestion.
 import functools
 
 from llama_index.core import PromptTemplate, Settings, StorageContext, VectorStoreIndex
+from llama_index.core.base.llms.types import LLMMetadata
 from llama_index.core.callbacks import CallbackManager, TokenCountingHandler
 from llama_index.core.node_parser import get_leaf_nodes
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import AutoMergingRetriever, QueryFusionRetriever
 from llama_index.core.vector_stores import ExactMatchFilter, MetadataFilters
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.gemini import Gemini
+from llama_index.llms.openai import OpenAI
 
 from policy_rag import config
 from policy_rag import vector_store as vector_store_backend
@@ -43,10 +44,32 @@ _EMBED_MODEL = None
 _TOKEN_COUNTER = None
 
 
+class OpenRouterLLM(OpenAI):
+    """OpenAI client pointed at OpenRouter, with explicit generic-model metadata.
+
+    LlamaIndex's ordinary OpenAI adapter infers chat capability and context size
+    from a fixed list of OpenAI model names. OpenRouter model slugs such as
+    ``google/gemini-2.5-flash-lite`` are intentionally not on that list, even
+    though OpenRouter provides the standard chat-completions endpoint. This
+    small adapter keeps the OpenAI client's request format while supplying the
+    metadata the query engine needs for any OpenRouter chat model.
+    """
+
+    @property
+    def metadata(self) -> LLMMetadata:
+        return LLMMetadata(
+            context_window=config.LLM_CONTEXT_WINDOW,
+            num_output=self.max_tokens or -1,
+            is_chat_model=True,
+            is_function_calling_model=False,
+            model_name=self.model,
+        )
+
+
 def configure_settings() -> None:
     """Configures the global embedding model, LLM and token counter.
 
-    Falls back to ``MockLLM`` when ``GEMINI_API_KEY`` is absent, which keeps
+    Falls back to ``MockLLM`` when ``OPENROUTER_API_KEY`` is absent, which keeps
     retrieval-only work (indexing, the retrieval benchmark) runnable without
     a key.
     """
@@ -55,11 +78,21 @@ def configure_settings() -> None:
         _EMBED_MODEL = HuggingFaceEmbedding(model_name=config.EMBED_MODEL_NAME)
     Settings.embed_model = _EMBED_MODEL
 
-    api_key = config.gemini_api_key()
+    api_key = config.openrouter_api_key()
     if api_key:
-        Settings.llm = Gemini(model_name=config.LLM_MODEL_NAME, api_key=api_key)
+        # OpenRouter implements OpenAI's chat-completions API. OpenRouterLLM
+        # keeps that client while supporting generic ``provider/model`` slugs.
+        Settings.llm = OpenRouterLLM(
+            model=config.LLM_MODEL_NAME,
+            api_base=config.OPENROUTER_BASE_URL,
+            api_key=api_key,
+            context_window=config.LLM_CONTEXT_WINDOW,
+            max_tokens=config.LLM_MAX_TOKENS,
+            is_chat_model=True,
+            is_function_calling_model=False,
+        )
     else:
-        print("WARNING: GEMINI_API_KEY not found. Using MockLLM; answers are not real.")
+        print("WARNING: OPENROUTER_API_KEY not found. Using MockLLM; answers are not real.")
         from llama_index.core.llms import MockLLM
         Settings.llm = MockLLM(max_tokens=256)
 
@@ -77,12 +110,12 @@ def token_counter() -> TokenCountingHandler:
 
 def llm_is_mocked() -> bool:
     """Returns True when no API key is configured and answers are not real."""
-    return not config.gemini_api_key()
+    return not config.openrouter_api_key()
 
 
 def active_llm_name() -> str:
     """Returns the LLM identifier recorded on traces and answer envelopes."""
-    return config.LLM_MODEL_NAME if config.gemini_api_key() else "MockLLM (no GEMINI_API_KEY)"
+    return config.LLM_MODEL_NAME if config.openrouter_api_key() else "MockLLM (no OPENROUTER_API_KEY)"
 
 
 def _load_storage_context() -> StorageContext:

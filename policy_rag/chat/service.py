@@ -54,8 +54,8 @@ def _collect_token_usage() -> dict:
     """Returns the token-usage block for the current query.
 
     Counts come from llama-index's tiktoken-based handler and are labelled as
-    estimates: the Gemini integration does not reliably surface provider usage,
-    and reporting an estimate as ground truth would be a lie in the envelope.
+    estimates rather than provider usage, so the envelope never implies a
+    precision the client did not report.
     """
     counter = engine.token_counter()
     if counter is None:

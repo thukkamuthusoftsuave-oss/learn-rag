@@ -111,8 +111,8 @@ def status():
         )
 
         warnings = []
-        if not config.gemini_api_key():
-            warnings.append("No GEMINI_API_KEY: answers come from a mock LLM and are not real.")
+        if not config.openrouter_api_key():
+            warnings.append("No OPENROUTER_API_KEY: answers come from a mock LLM and are not real.")
         if missing_credentials:
             warnings.append(
                 "Cloud backend selected but missing: " + ", ".join(missing_credentials)

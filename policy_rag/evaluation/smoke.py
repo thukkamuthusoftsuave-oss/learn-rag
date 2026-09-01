@@ -9,7 +9,7 @@ Three questions, each covering one behaviour the assistant must never lose:
 3. **Reading the prerequisite clause.** A part-time employee does not meet the
    continuous-service definition, so the obvious cap-table row does not apply.
 
-Requires a built index and a ``GEMINI_API_KEY``. For the full picture use
+Requires a built index and an ``OPENROUTER_API_KEY``. For the full picture use
 ``policy-rag eval quality``; this is the check to run before a demo.
 """
 
