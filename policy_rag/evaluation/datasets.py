@@ -44,6 +44,12 @@ class GoldenQuery:
         note: Why this question is in the set.
         ambiguous: True when no single source is correct, so the question is
             excluded from metrics and reported as a known limitation.
+        problem_type: Category (``"core_entitlement"``, ``"refusal_safety"``,
+            ``"edge_qualification"``, ``"retrieval_stress"``).
+        expected_facts: Tuple of required factual assertions / numbers.
+        human_verdict: Ground-truth human rating (1 = pass, 0 = fail).
+        human_severity: Error severity (0 for clean, 1-5 for bugs).
+        human_observation: One-sentence human analysis of baseline behavior.
     """
 
     id: str
@@ -54,6 +60,11 @@ class GoldenQuery:
     expected_section: str = None
     note: str = ""
     ambiguous: bool = False
+    problem_type: str = "core_entitlement"
+    expected_facts: tuple = ()
+    human_verdict: int = 1
+    human_severity: int = 0
+    human_observation: str = ""
 
     def expectation(self) -> dict:
         """Returns the gold fields the taxonomy needs to label a trace."""
@@ -62,6 +73,22 @@ class GoldenQuery:
             "expected_type": self.expected_type,
             "expected_source": self.expected_source,
             "expected_section": self.expected_section,
+        }
+
+    def expectation_eval(self) -> dict:
+        """Returns full evaluation expectations including facts and human baseline."""
+        return {
+            "golden_id": self.id,
+            "query": self.query,
+            "region": self.region,
+            "expected_type": self.expected_type,
+            "expected_source": self.expected_source,
+            "expected_section": self.expected_section,
+            "problem_type": self.problem_type,
+            "expected_facts": self.expected_facts,
+            "human_verdict": self.human_verdict,
+            "human_severity": self.human_severity,
+            "human_observation": self.human_observation,
         }
 
 
@@ -73,6 +100,11 @@ CORE_QUERIES = [
         expected_source="addendum_NA.txt",
         expected_section="HR-207 Section 4.2",
         note="Cap table row selected by employee type.",
+        problem_type="core_entitlement",
+        expected_facts=("5 days", "probationary"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correct cap (5 days) retrieved from Section 4.2 of NA addendum.",
     ),
     GoldenQuery(
         id="CORE-02",
@@ -81,6 +113,11 @@ CORE_QUERIES = [
         expected_source="addendum_EMEA.txt",
         expected_section="HR-207 Section 4.2",
         note="Cap table row selected by service length.",
+        problem_type="core_entitlement",
+        expected_facts=("12 days", "regular"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correct cap (12 days) correctly matched to 1 year of service in EMEA.",
     ),
     GoldenQuery(
         id="CORE-03",
@@ -89,6 +126,11 @@ CORE_QUERIES = [
         expected_source="addendum_APAC.txt",
         expected_section="HR-207 Section 4.2",
         note="Same question shape, different region - tests region separation.",
+        problem_type="core_entitlement",
+        expected_facts=("15 days", "senior"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correct cap (15 days) retrieved from Section 4.2 of APAC addendum.",
     ),
     GoldenQuery(
         id="CORE-04",
@@ -97,6 +139,11 @@ CORE_QUERIES = [
         expected_source="addendum_LATAM.txt",
         expected_section="Header",
         note="Answer lives in the document header, not a section.",
+        problem_type="core_entitlement",
+        expected_facts=("2026-03-01", "March 1, 2026"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Effective date (March 1, 2026) correctly extracted from header.",
     ),
     GoldenQuery(
         id="CORE-05",
@@ -105,6 +152,11 @@ CORE_QUERIES = [
         expected_source="addendum_US.txt",
         expected_section="HR-207 Section 4.1",
         note="Definition clause that gates every cap.",
+        problem_type="core_entitlement",
+        expected_facts=("40 hours per week", "52 weeks"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Continuous service definition (40 hrs/wk, 52 wks) correctly cited.",
     ),
     GoldenQuery(
         id="CORE-06",
@@ -113,6 +165,11 @@ CORE_QUERIES = [
         expected_source="addendum_UK.txt",
         expected_section="HR-207 Section 4.3",
         note="Section that exists only in EMEA and UK.",
+        problem_type="core_entitlement",
+        expected_facts=("10 years", "6 weeks"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="UK sabbatical criteria (10 years service, 6 weeks) correctly identified.",
     ),
     GoldenQuery(
         id="CORE-07",
@@ -121,6 +178,11 @@ CORE_QUERIES = [
         expected_source="addendum_US.txt",
         expected_section="HR-207 Section 4.2",
         note="Numeric threshold in the query text.",
+        problem_type="core_entitlement",
+        expected_facts=("20 days", "senior"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Senior US cap (>2 years) correctly identified as 20 days.",
     ),
     GoldenQuery(
         id="CORE-08",
@@ -129,6 +191,11 @@ CORE_QUERIES = [
         expected_source="addendum_NA.txt",
         expected_section="HR-207 Section 4.2",
         note="Yes/no question whose correct answer is 'no' - 15 is the senior cap.",
+        problem_type="core_entitlement",
+        expected_facts=("No", "10 days", "15 days"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correct negative answer: regular employees receive 10 days, 15 is senior cap.",
     ),
 ]
 
@@ -139,6 +206,8 @@ HARD_QUERIES = [
         expected_source="addendum_UK.txt",
         expected_section="HR-207 Section 4.3",
         note="Only UK grants a sabbatical at 10 years; '10 years' is an exact BM25 target.",
+        problem_type="retrieval_stress",
+        expected_facts=("UK", "6-week", "10 years"),
     ),
     GoldenQuery(
         id="HARD-02",
@@ -146,6 +215,8 @@ HARD_QUERIES = [
         expected_source="addendum_EMEA.txt",
         expected_section="HR-207 Section 4.3",
         note="Only EMEA grants a sabbatical at 5 years; vector search conflates it with UK.",
+        problem_type="retrieval_stress",
+        expected_facts=("EMEA", "4-week", "5 years"),
     ),
     GoldenQuery(
         id="HARD-03",
@@ -153,6 +224,8 @@ HARD_QUERIES = [
         expected_source="addendum_APAC.txt",
         expected_section="HR-207 Section 4.8",
         note="Literal section number - the clearest case for keyword matching.",
+        problem_type="retrieval_stress",
+        expected_facts=("December 5", "5 business days"),
     ),
     GoldenQuery(
         id="HARD-04",
@@ -160,6 +233,7 @@ HARD_QUERIES = [
         expected_source=None,
         note="No region named at all. Neither retriever can fix this; it needs a region filter.",
         ambiguous=True,
+        problem_type="retrieval_stress",
     ),
 ]
 
@@ -169,18 +243,33 @@ REFUSAL_QUERIES = [
         query="What is the maternity leave policy in EMEA?",
         expected_type="refusal",
         note="Adjacent HR topic that the corpus deliberately never mentions.",
+        problem_type="refusal_safety",
+        expected_facts=(),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly refused: maternity leave is outside this corpus.",
     ),
     GoldenQuery(
         id="OOC-02",
         query="Who is eligible for sabbatical in LATAM?",
         expected_type="refusal",
         note="Real section, wrong region - LATAM has no sabbatical clause.",
+        problem_type="refusal_safety",
+        expected_facts=(),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly refused: LATAM addendum has no Section 4.3 sabbatical clause.",
     ),
     GoldenQuery(
         id="OOC-03",
         query="What is the reimbursement limit for home office equipment?",
         expected_type="refusal",
         note="Different policy family entirely.",
+        problem_type="refusal_safety",
+        expected_facts=(),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly refused: expense reimbursement is not covered by HR-207.",
     ),
     GoldenQuery(
         id="OOC-04",
@@ -188,6 +277,11 @@ REFUSAL_QUERIES = [
         region="US",
         expected_type="refusal",
         note="Vague, near-topical question with a region filter still applied.",
+        problem_type="refusal_safety",
+        expected_facts=(),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly refused: selfcare is not in the policy corpus.",
     ),
 ]
 
@@ -202,6 +296,11 @@ EDGE_QUERIES = [
         expected_source="addendum_US.txt",
         expected_section="HR-207 Section 4.7",
         note="Eligibility clause disqualifies the obvious senior cap-table row.",
+        problem_type="edge_qualification",
+        expected_facts=("0 days", "not eligible", "part-time"),
+        human_verdict=0,
+        human_severity=4,
+        human_observation="Model incorrectly awarded 20 days based on 3 yrs tenure, ignoring Section 4.7 part-time exclusion.",
     ),
     GoldenQuery(
         id="EDGE-02",
@@ -210,6 +309,11 @@ EDGE_QUERIES = [
         expected_source="addendum_NA.txt",
         expected_section="HR-207 Section 4.5",
         note="Forfeiture rule in a later section.",
+        problem_type="edge_qualification",
+        expected_facts=("50%", "reduces payout"),
+        human_verdict=0,
+        human_severity=3,
+        human_observation="Model stated standard 100% voluntary payout, missing the 50% penalty for resigning without notice.",
     ),
     GoldenQuery(
         id="EDGE-03",
@@ -218,6 +322,11 @@ EDGE_QUERIES = [
         expected_source="addendum_NA.txt",
         expected_section="HR-207 Section 4.1",
         note="Exclusion stated in the eligibility section.",
+        problem_type="edge_qualification",
+        expected_facts=("not covered", "cannot claim", "No"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly identified that contract workers and vendors are excluded.",
     ),
     GoldenQuery(
         id="EDGE-04",
@@ -226,6 +335,11 @@ EDGE_QUERIES = [
         expected_source="addendum_UK.txt",
         expected_section="HR-207 Section 4.4",
         note="Expiry date differs per region.",
+        problem_type="edge_qualification",
+        expected_facts=("March 31", "June 30"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly cited March 31 for regular/probationary and June 30 for senior.",
     ),
     GoldenQuery(
         id="EDGE-05",
@@ -234,6 +348,11 @@ EDGE_QUERIES = [
         expected_source="addendum_APAC.txt",
         expected_section="HR-207 Section 4.8",
         note="Procedural rather than entitlement question.",
+        problem_type="edge_qualification",
+        expected_facts=("HRIS", "December 5", "5 business days"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correct procedure cited: HRIS submission by December 5 with 5-day manager window.",
     ),
     GoldenQuery(
         id="EDGE-06",
@@ -242,6 +361,11 @@ EDGE_QUERIES = [
         expected_source="addendum_EMEA.txt",
         expected_section="HR-207 Section 4.9",
         note="Asks for a section by number rather than by topic.",
+        problem_type="edge_qualification",
+        expected_facts=("Policy Exceptions", "5 additional", "HR director"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Accurately summarized Section 4.9 Policy Exceptions in EMEA.",
     ),
     GoldenQuery(
         id="EDGE-07",
@@ -250,6 +374,11 @@ EDGE_QUERIES = [
         expected_source="addendum_EMEA.txt",
         expected_section="HR-207 Section 4.3",
         note="Two facts must come from the same section.",
+        problem_type="edge_qualification",
+        expected_facts=("4-week", "5 years"),
+        human_verdict=0,
+        human_severity=3,
+        human_observation="Model stated 4-week duration but omitted the 5-year tenure eligibility requirement.",
     ),
     GoldenQuery(
         id="EDGE-08",
@@ -258,6 +387,11 @@ EDGE_QUERIES = [
         expected_source="addendum_US.txt",
         expected_section="HR-207 Section 4.6",
         note="Advance-borrowing rule with a numeric limit.",
+        problem_type="edge_qualification",
+        expected_facts=("5", "borrow", "manager approval"),
+        human_verdict=1,
+        human_severity=0,
+        human_observation="Correctly confirmed borrowing up to 5 days with manager approval.",
     ),
 ]
 

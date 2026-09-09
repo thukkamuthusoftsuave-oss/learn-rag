@@ -231,6 +231,49 @@ def cmd_eval_smoke(args: argparse.Namespace) -> int:
     return 0 if all(r["passed"] for r in results) else 1
 
 
+def cmd_eval_test(args: argparse.Namespace) -> int:
+    """Runs the one-command automated evaluation test set."""
+    from policy_rag.evaluation.test_suite import (
+        evaluate_queries,
+        compute_delta,
+        write_delta_report,
+        print_test_suite_summary,
+    )
+    from policy_rag.observability.traces import default_store
+
+    traces = None
+    if getattr(args, "from_traces", False):
+        traces = default_store.read(source="evaluation")
+
+    current_eval = evaluate_queries(traces, mode="improved")
+
+    delta_result = None
+    if getattr(args, "delta", False):
+        # Compare against Week 5 baseline
+        baseline_eval = evaluate_queries(mode="baseline")
+        delta_result = compute_delta(baseline_eval, current_eval)
+        report_path = write_delta_report(delta_result)
+        print(f"Report written to: {report_path}")
+
+    print_test_suite_summary(current_eval, delta_result)
+    return 0 if current_eval["overall_score_pct"] >= 70.0 else 1
+
+
+def cmd_eval_judge_validate(args: argparse.Namespace) -> int:
+    """Validates the Track C policy judge against human ground-truth reviews."""
+    from policy_rag.evaluation.judge_validation import (
+        validate_judge,
+        print_validation_summary,
+        write_validation_report,
+    )
+
+    report_data = validate_judge()
+    print_validation_summary(report_data)
+    report_path = write_validation_report(report_data)
+    print(f"Validation report saved to: {report_path}")
+    return 0 if report_data["is_trusted"] else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Builds the argument parser with every command.
 
@@ -300,6 +343,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     suites.add_parser("smoke", help="three end-to-end checks: refusal, region filter, edge case") \
         .set_defaults(func=cmd_eval_smoke)
+
+    test_cmd = suites.add_parser(
+        "test",
+        help="one-command automated test suite: assertions, AI judge, scores per problem type",
+    )
+    test_cmd.add_argument("--from-traces", action="store_true", dest="from_traces",
+                          help="evaluate stored traces instead of running live")
+    test_cmd.add_argument("--delta", action="store_true",
+                          help="compute before-and-after delta against baseline and write report")
+    test_cmd.set_defaults(func=cmd_eval_test)
+
+    validate_cmd = suites.add_parser(
+        "judge-validate",
+        help="validate the Track C policy-answer judge against human ground-truth reviews",
+    )
+    validate_cmd.set_defaults(func=cmd_eval_judge_validate)
 
     return parser
 
