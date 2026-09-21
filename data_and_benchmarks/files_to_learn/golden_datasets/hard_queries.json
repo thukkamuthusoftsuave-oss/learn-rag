@@ -1,0 +1,73 @@
+[
+  {
+    "id": "HARD-01",
+    "query": "After 10 years of service what sabbatical am I entitled to?",
+    "region": null,
+    "expected_type": "answer",
+    "expected_source": "addendum_UK.txt",
+    "expected_section": "HR-207 Section 4.3",
+    "note": "Only UK grants a sabbatical at 10 years; '10 years' is an exact BM25 target.",
+    "ambiguous": false,
+    "problem_type": "retrieval_stress",
+    "expected_facts": [
+      "UK",
+      "6-week",
+      "10 years"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": ""
+  },
+  {
+    "id": "HARD-02",
+    "query": "After 5 years of service what sabbatical am I entitled to?",
+    "region": null,
+    "expected_type": "answer",
+    "expected_source": "addendum_EMEA.txt",
+    "expected_section": "HR-207 Section 4.3",
+    "note": "Only EMEA grants a sabbatical at 5 years; vector search conflates it with UK.",
+    "ambiguous": false,
+    "problem_type": "retrieval_stress",
+    "expected_facts": [
+      "EMEA",
+      "4-week",
+      "5 years"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": ""
+  },
+  {
+    "id": "HARD-03",
+    "query": "What does HR-207 Section 4.8 say about approval deadlines in APAC?",
+    "region": null,
+    "expected_type": "answer",
+    "expected_source": "addendum_APAC.txt",
+    "expected_section": "HR-207 Section 4.8",
+    "note": "Literal section number - the clearest case for keyword matching.",
+    "ambiguous": false,
+    "problem_type": "retrieval_stress",
+    "expected_facts": [
+      "December 5",
+      "5 business days"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": ""
+  },
+  {
+    "id": "HARD-04",
+    "query": "What is the carry-over cap for a senior employee with more than 2 years of service?",
+    "region": null,
+    "expected_type": "answer",
+    "expected_source": null,
+    "expected_section": null,
+    "note": "No region named at all. Neither retriever can fix this; it needs a region filter.",
+    "ambiguous": true,
+    "problem_type": "retrieval_stress",
+    "expected_facts": [],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": ""
+  }
+]

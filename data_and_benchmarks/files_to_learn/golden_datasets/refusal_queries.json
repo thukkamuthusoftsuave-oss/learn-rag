@@ -1,0 +1,62 @@
+[
+  {
+    "id": "OOC-01",
+    "query": "What is the maternity leave policy in EMEA?",
+    "region": null,
+    "expected_type": "refusal",
+    "expected_source": null,
+    "expected_section": null,
+    "note": "Adjacent HR topic that the corpus deliberately never mentions.",
+    "ambiguous": false,
+    "problem_type": "refusal_safety",
+    "expected_facts": [],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly refused: maternity leave is outside this corpus."
+  },
+  {
+    "id": "OOC-02",
+    "query": "Who is eligible for sabbatical in LATAM?",
+    "region": null,
+    "expected_type": "refusal",
+    "expected_source": null,
+    "expected_section": null,
+    "note": "Real section, wrong region - LATAM has no sabbatical clause.",
+    "ambiguous": false,
+    "problem_type": "refusal_safety",
+    "expected_facts": [],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly refused: LATAM addendum has no Section 4.3 sabbatical clause."
+  },
+  {
+    "id": "OOC-03",
+    "query": "What is the reimbursement limit for home office equipment?",
+    "region": null,
+    "expected_type": "refusal",
+    "expected_source": null,
+    "expected_section": null,
+    "note": "Different policy family entirely.",
+    "ambiguous": false,
+    "problem_type": "refusal_safety",
+    "expected_facts": [],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly refused: expense reimbursement is not covered by HR-207."
+  },
+  {
+    "id": "OOC-04",
+    "query": "What is selfcare?",
+    "region": "US",
+    "expected_type": "refusal",
+    "expected_source": null,
+    "expected_section": null,
+    "note": "Vague, near-topical question with a region filter still applied.",
+    "ambiguous": false,
+    "problem_type": "refusal_safety",
+    "expected_facts": [],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly refused: selfcare is not in the policy corpus."
+  }
+]

@@ -1,0 +1,151 @@
+[
+  {
+    "id": "EDGE-01",
+    "query": "I am a part-time employee (20 hours/week) in the US and I have worked here for 3 years. How many carry-over days do I get?",
+    "region": "US",
+    "expected_type": "answer",
+    "expected_source": "addendum_US.txt",
+    "expected_section": "HR-207 Section 4.7",
+    "note": "Eligibility clause disqualifies the obvious senior cap-table row.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "0 days",
+      "not eligible",
+      "part-time"
+    ],
+    "human_verdict": 0,
+    "human_severity": 4,
+    "human_observation": "Model incorrectly awarded 20 days based on 3 yrs tenure, ignoring Section 4.7 part-time exclusion."
+  },
+  {
+    "id": "EDGE-02",
+    "query": "What happens to my carry-over balance if I resign without notice in NA?",
+    "region": "NA",
+    "expected_type": "answer",
+    "expected_source": "addendum_NA.txt",
+    "expected_section": "HR-207 Section 4.5",
+    "note": "Forfeiture rule in a later section.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "50%",
+      "reduces payout"
+    ],
+    "human_verdict": 0,
+    "human_severity": 3,
+    "human_observation": "Model stated standard 100% voluntary payout, missing the 50% penalty for resigning without notice."
+  },
+  {
+    "id": "EDGE-03",
+    "query": "Can a contract worker claim carry-over in NA?",
+    "region": "NA",
+    "expected_type": "answer",
+    "expected_source": "addendum_NA.txt",
+    "expected_section": "HR-207 Section 4.1",
+    "note": "Exclusion stated in the eligibility section.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "not covered",
+      "cannot claim",
+      "No"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly identified that contract workers and vendors are excluded."
+  },
+  {
+    "id": "EDGE-04",
+    "query": "When do carried-over days expire in UK?",
+    "region": "UK",
+    "expected_type": "answer",
+    "expected_source": "addendum_UK.txt",
+    "expected_section": "HR-207 Section 4.4",
+    "note": "Expiry date differs per region.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "March 31",
+      "June 30"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly cited March 31 for regular/probationary and June 30 for senior."
+  },
+  {
+    "id": "EDGE-05",
+    "query": "How do I submit a carry-over request in APAC?",
+    "region": "APAC",
+    "expected_type": "answer",
+    "expected_source": "addendum_APAC.txt",
+    "expected_section": "HR-207 Section 4.8",
+    "note": "Procedural rather than entitlement question.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "HRIS",
+      "December 5",
+      "5 business days"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correct procedure cited: HRIS submission by December 5 with 5-day manager window."
+  },
+  {
+    "id": "EDGE-06",
+    "query": "What is Section 4.9 about in EMEA?",
+    "region": "EMEA",
+    "expected_type": "answer",
+    "expected_source": "addendum_EMEA.txt",
+    "expected_section": "HR-207 Section 4.9",
+    "note": "Asks for a section by number rather than by topic.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "Policy Exceptions",
+      "5 additional",
+      "HR director"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Accurately summarized Section 4.9 Policy Exceptions in EMEA."
+  },
+  {
+    "id": "EDGE-07",
+    "query": "What is the sabbatical duration and eligibility in EMEA?",
+    "region": "EMEA",
+    "expected_type": "answer",
+    "expected_source": "addendum_EMEA.txt",
+    "expected_section": "HR-207 Section 4.3",
+    "note": "Two facts must come from the same section.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "4-week",
+      "5 years"
+    ],
+    "human_verdict": 0,
+    "human_severity": 3,
+    "human_observation": "Model stated 4-week duration but omitted the 5-year tenure eligibility requirement."
+  },
+  {
+    "id": "EDGE-08",
+    "query": "Can I borrow vacation days in advance in US, and what is the limit?",
+    "region": "US",
+    "expected_type": "answer",
+    "expected_source": "addendum_US.txt",
+    "expected_section": "HR-207 Section 4.6",
+    "note": "Advance-borrowing rule with a numeric limit.",
+    "ambiguous": false,
+    "problem_type": "edge_qualification",
+    "expected_facts": [
+      "5",
+      "borrow",
+      "manager approval"
+    ],
+    "human_verdict": 1,
+    "human_severity": 0,
+    "human_observation": "Correctly confirmed borrowing up to 5 days with manager approval."
+  }
+]

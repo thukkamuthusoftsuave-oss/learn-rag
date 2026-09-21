@@ -1,0 +1,127 @@
+[
+  {
+    "question_id": "Q1",
+    "employee_id": "EMP-101",
+    "query": "What is the mandatory notice period required for employee EMP-101 (Alice Smith) in the UK with 1.5 years of service?",
+    "category": "Notice Period (Tenure Branching < 2 yrs)",
+    "is_branching": true,
+    "expected_facts": [
+      "1 week",
+      "UK",
+      "statutory"
+    ],
+    "description": "Tenure 1.5 years triggers statutory 1-week notice rule under UK Employment Rights Act \u00a7 86."
+  },
+  {
+    "question_id": "Q2",
+    "employee_id": "EMP-102",
+    "query": "What is the statutory notice period for employee EMP-102 (Bob Jones) in the UK with 4.0 years of continuous service?",
+    "category": "Notice Period (Tenure Branching >= 2 yrs)",
+    "is_branching": true,
+    "expected_facts": [
+      "4 weeks",
+      "statutory"
+    ],
+    "description": "Tenure 4 years triggers statutory 1 week per completed year (4 weeks total)."
+  },
+  {
+    "question_id": "Q3",
+    "employee_id": "EMP-103",
+    "query": "Is EMP-103 (Carlos Ruiz) in EMEA eligible for sabbatical leave, and if so, for how long?",
+    "category": "Sabbatical (Tenure Branching >= 5 yrs)",
+    "is_branching": true,
+    "expected_facts": [
+      "eligible",
+      "4-week",
+      "sabbatical"
+    ],
+    "description": "Tenure 6.0 years meets the 5-year threshold for a 4-week fully paid sabbatical."
+  },
+  {
+    "question_id": "Q4",
+    "employee_id": "EMP-104",
+    "query": "Is EMP-104 (Diana Chen) in EMEA eligible for sabbatical leave under policy and statutory rules?",
+    "category": "Sabbatical (Tenure Branching < 5 yrs)",
+    "is_branching": true,
+    "expected_facts": [
+      "not eligible",
+      "5 years"
+    ],
+    "description": "Tenure 3.0 years fails the 5-year threshold; employee is ineligible (0 weeks)."
+  },
+  {
+    "question_id": "Q5",
+    "employee_id": "EMP-105",
+    "query": "How many carry-over vacation days is EMP-105 (Evan Wright) in the US entitled to keep into the new calendar year?",
+    "category": "Carry-over Cap (Regular US)",
+    "is_branching": false,
+    "expected_facts": [
+      "10 days",
+      "Regular"
+    ],
+    "description": "Regular tier in US receives 10 days carry-over cap under Section 4.2."
+  },
+  {
+    "question_id": "Q6",
+    "employee_id": "EMP-106",
+    "query": "How many carry-over days is EMP-106 (Fiona Gallagher) entitled to in the US, given she works 25 hours per week?",
+    "category": "Carry-over Cap (Part-time Exclusion)",
+    "is_branching": false,
+    "expected_facts": [
+      "0 days",
+      "part-time",
+      "Section 4.7"
+    ],
+    "description": "Part-time under 40 hours/week is excluded from carry-over (0 days) regardless of 3 years tenure."
+  },
+  {
+    "question_id": "Q7",
+    "employee_id": "EMP-107",
+    "query": "What is the carry-over cap and expiry deadline for EMP-107 (George Tanaka) in APAC?",
+    "category": "Carry-over Cap & Expiry (Senior APAC)",
+    "is_branching": false,
+    "expected_facts": [
+      "20 days",
+      "May 31"
+    ],
+    "description": "Senior tier in APAC receives 20 days carry-over cap expiring May 31."
+  },
+  {
+    "question_id": "Q8",
+    "employee_id": "EMP-108",
+    "query": "Can EMP-108 (Hannah Abbott) in NA borrow vacation days ahead of accrual for an upcoming trip?",
+    "category": "Negative Balance (Probationary NA)",
+    "is_branching": false,
+    "expected_facts": [
+      "not permitted",
+      "probationary"
+    ],
+    "description": "Section 4.6 strictly prohibits vacation borrowing during the probationary period."
+  },
+  {
+    "question_id": "Q9",
+    "employee_id": "EMP-109",
+    "query": "How will unused carry-over days be handled upon termination for EMP-109 (Ian Malcolm) located in California, US?",
+    "category": "Termination Payout (California Statutory Override)",
+    "is_branching": true,
+    "expected_facts": [
+      "California",
+      "100%",
+      "paid out"
+    ],
+    "description": "California Labor Code \u00a7 227.3 prohibits forfeiture; 100% payout required as earned wages."
+  },
+  {
+    "question_id": "Q10",
+    "employee_id": "EMP-110",
+    "query": "What is the resignation notice period and carry-over cap for EMP-110 (Julia Kim) in APAC who joined 3 months ago?",
+    "category": "Notice & Cap (Probationary APAC)",
+    "is_branching": false,
+    "expected_facts": [
+      "1 week",
+      "5 days",
+      "probationary"
+    ],
+    "description": "Probationary employee in APAC has 1 week notice and 5 days carry-over cap."
+  }
+]

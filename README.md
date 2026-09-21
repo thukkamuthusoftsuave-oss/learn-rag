@@ -1,9 +1,34 @@
-# HR-207 Policy Assistant
+# HR-207 Policy Assistant & Enterprise RAG Framework
 
-A retrieval-augmented chat assistant that answers questions about the HR-207
-leave-policy addenda (PTO carry-over, sabbaticals) across six regions — with
-citations, region-filtered hybrid retrieval, a forced refusal for out-of-corpus
-questions, and a trace log that every answer is written to.
+A retrieval-augmented chat assistant and autonomous agent framework that answers questions about the HR-207 leave-policy addenda across six regions — with citations, region-filtered hybrid retrieval, a forced refusal for out-of-corpus questions, a 4-layer defense against prompt injections, and a comprehensive trace log.
+
+---
+
+## 🏛️ Repository Structure: 3 Distinct Places
+
+The repository is structured into three dedicated directories:
+
+1. **[`application/`](file:///d:/learn-rag/application)**: **The Actual Production Application (Next.js + Python FastAPI)**
+   - Comprises all concepts mastered across the curriculum (hierarchical parsing, hybrid retrieval, autonomous ReAct agent, deterministic DAG workflow, 4-layer prompt injection defense, multi-turn chat with query condensation, citations, and observability traces) **without any week references**.
+   - **Frontend**: Next.js App Router with modern glassmorphic dark UI, interactive chat, trajectory step viewer, live prompt injection testing sandbox, and trace analytics dashboard.
+   - **Backend**: FastAPI with async endpoints, Pydantic v2 models, LlamaIndex, ChromaDB, BM25, and telemetry.
+
+2. **[`curriculum/`](file:///d:/learn-rag/curriculum)**: **Week-by-Week Implementation Modules (Weeks 1 to 8)**
+   - Week-by-week implementation folders, each with self-contained runnable code and comprehensive technical documentation:
+     - [`week_01_corpus_and_naive_chunking/`](file:///d:/learn-rag/curriculum/week_01_corpus_and_naive_chunking): Corpus generation & naive chunking baseline.
+     - [`week_02_structure_aware_chunking_and_metadata/`](file:///d:/learn-rag/curriculum/week_02_structure_aware_chunking_and_metadata): Structure-aware sectioning & metadata filtering.
+     - [`week_03_embeddings_and_hybrid_retrieval/`](file:///d:/learn-rag/curriculum/week_03_embeddings_and_hybrid_retrieval): Dense vector embeddings, BM25, and Reciprocal Rank Fusion (RRF).
+     - [`week_04_retrieval_debugging_and_failure_separation/`](file:///d:/learn-rag/curriculum/week_04_retrieval_debugging_and_failure_separation): Failure separation (Retrieval vs Generation) & deterministic refusal.
+     - [`week_05_error_analysis_and_eval_taxonomy/`](file:///d:/learn-rag/curriculum/week_05_error_analysis_and_eval_taxonomy): 5-class error taxonomy, impact ranking & prediction cards.
+     - [`week_06_advanced_rag_multiturn_and_query_condensation/`](file:///d:/learn-rag/curriculum/week_06_advanced_rag_multiturn_and_query_condensation): Multi-turn chat, query rewriting & citation enforcement.
+     - [`week_07_agent_vs_fixed_workflow/`](file:///d:/learn-rag/curriculum/week_07_agent_vs_fixed_workflow): ReAct Agent vs Fixed DAG Workflow & the 8 Numbers benchmark.
+     - [`week_08_trajectory_eval_and_injection_defense/`](file:///d:/learn-rag/curriculum/week_08_trajectory_eval_and_injection_defense): Outcome-vs-Trajectory Gap & 4-Layer Defense-in-Depth.
+
+3. **[`data_and_benchmarks/`](file:///d:/learn-rag/data_and_benchmarks)**: **Test Responses, Datasets & Learning Files**
+   - [`files_to_learn/`](file:///d:/learn-rag/data_and_benchmarks/files_to_learn): 6 regional policy addenda, standardized golden question sets (JSON), in-depth study guides, and manual review spreadsheets.
+   - [`test_responses/`](file:///d:/learn-rag/data_and_benchmarks/test_responses): Empirical benchmark results (`week8_trajectory_eval.csv`, `race.csv`), deliverable reports, and production trace logs.
+
+---
 
 ## Why
 
