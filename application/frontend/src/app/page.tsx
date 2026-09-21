@@ -36,6 +36,8 @@ interface Message {
   traceId?: string;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"chat" | "agent" | "security" | "observability">("chat");
 
@@ -50,8 +52,8 @@ export default function Home() {
     }
   ]);
   const [inputQuery, setInputQuery] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("All");
-  const [isHybrid, setIsHybrid] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState<string>("All");
+  const [isHybrid, setIsHybrid] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedChunkIndex, setExpandedChunkIndex] = useState<number | null>(null);
 
@@ -85,7 +87,7 @@ export default function Home() {
   const fetchTelemetry = async () => {
     setIsLoadingTelemetry(true);
     try {
-      const res = await fetch("http://localhost:8000/api/traces?limit=25");
+      const res = await fetch(`${API_BASE}/api/traces?limit=25`);
       if (res.ok) {
         const data = await res.json();
         setTelemetry(data);
@@ -115,7 +117,7 @@ export default function Home() {
           assistant: messages[idx + 1]?.content || ""
         }));
 
-      const res = await fetch("http://localhost:8000/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -161,7 +163,7 @@ export default function Home() {
     setIsAgentRunning(true);
     setAgentResult(null);
     try {
-      const endpoint = mode === "agent" ? "http://localhost:8000/api/agent/run" : "http://localhost:8000/api/workflow/run";
+      const endpoint = mode === "agent" ? `${API_BASE}/api/agent/run` : `${API_BASE}/api/workflow/run`;
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,7 +189,7 @@ export default function Home() {
     setSecurityResult(null);
     try {
       if (securityHardened) {
-        const res = await fetch("http://localhost:8000/api/security/scan", {
+        const res = await fetch(`${API_BASE}/api/security/scan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: securityInput })
@@ -204,7 +206,7 @@ export default function Home() {
         }
       } else {
         // Run unhardened agent test
-        const res = await fetch("http://localhost:8000/api/agent/run", {
+        const res = await fetch(`${API_BASE}/api/agent/run`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -235,7 +237,7 @@ export default function Home() {
     setIsReindexing(true);
     setReindexStatus(null);
     try {
-      const res = await fetch("http://localhost:8000/api/admin/reindex", { method: "POST" });
+      const res = await fetch(`${API_BASE}/api/admin/reindex`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         setReindexStatus(`Success: Indexed ${data.documents_count} docs into ${data.leaf_nodes} leaf nodes in ChromaDB.`);
@@ -271,44 +273,40 @@ export default function Home() {
           <nav className="flex space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setActiveTab("chat")}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "chat"
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === "chat"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`}
+                }`}
             >
               <MessageSquare className="h-4 w-4" />
               <span>Assistant</span>
             </button>
             <button
               onClick={() => setActiveTab("agent")}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "agent"
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === "agent"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`}
+                }`}
             >
               <Cpu className="h-4 w-4" />
               <span>Agent vs Workflow</span>
             </button>
             <button
               onClick={() => setActiveTab("security")}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "security"
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === "security"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`}
+                }`}
             >
               <ShieldAlert className="h-4 w-4" />
               <span>Injection Defense</span>
             </button>
             <button
               onClick={() => setActiveTab("observability")}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === "observability"
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === "observability"
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`}
+                }`}
             >
               <BarChart3 className="h-4 w-4" />
               <span>Observability</span>
@@ -393,16 +391,14 @@ export default function Home() {
               {messages.map((m, idx) => (
                 <div
                   key={idx}
-                  className={`flex flex-col ${
-                    m.role === "user" ? "items-end" : "items-start"
-                  }`}
+                  className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-2xl rounded-2xl p-4 text-sm leading-relaxed ${
-                      m.role === "user"
+                    className={`max-w-2xl rounded-2xl p-4 text-sm leading-relaxed ${m.role === "user"
                         ? "bg-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/20"
                         : "bg-slate-900/90 border border-slate-800/80 text-slate-200 rounded-tl-none"
-                    }`}
+                      }`}
                   >
                     {/* Condensation Notice */}
                     {m.wasCondensed && (
@@ -724,11 +720,10 @@ export default function Home() {
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="text-sm font-bold text-slate-100">Defense Inspection Results</h3>
                   <span
-                    className={`text-xs font-bold px-3 py-1 rounded-full ${
-                      securityResult.status === "NEUTRALIZED" || securityResult.status === "CLEAN"
+                    className={`text-xs font-bold px-3 py-1 rounded-full ${securityResult.status === "NEUTRALIZED" || securityResult.status === "CLEAN"
                         ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
                         : "bg-rose-950 text-rose-300 border border-rose-800 animate-pulse"
-                    }`}
+                      }`}
                   >
                     STATUS: {securityResult.status}
                   </span>
@@ -864,11 +859,10 @@ export default function Home() {
                           <td className="py-2.5 max-w-xs truncate text-slate-300">{t.condensed_query || t.query}</td>
                           <td className="py-2.5">
                             <span
-                              className={`px-2 py-0.5 rounded font-mono text-[11px] ${
-                                t.label === "CORRECT" || t.label === "CORRECT_REFUSAL"
+                              className={`px-2 py-0.5 rounded font-mono text-[11px] ${t.label === "CORRECT" || t.label === "CORRECT_REFUSAL"
                                   ? "bg-emerald-950/80 text-emerald-300"
                                   : "bg-rose-950/80 text-rose-300"
-                              }`}
+                                }`}
                             >
                               {t.label}
                             </span>
