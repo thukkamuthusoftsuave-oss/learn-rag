@@ -274,6 +274,89 @@ def cmd_eval_judge_validate(args: argparse.Namespace) -> int:
     return 0 if report_data["is_trusted"] else 1
 
 
+def cmd_agent(args: argparse.Namespace) -> int:
+    """Runs the hand-built HR policy agent with visible steps and budget limits."""
+    from policy_rag.agent.loop import HRAgent
+
+    agent = HRAgent(verbose=not args.quiet)
+    result = agent.run(
+        args.question,
+        max_iterations=args.max_iters,
+        max_tokens=args.max_tokens,
+        max_cost=args.max_cost,
+        max_time_seconds=args.max_time,
+    )
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif args.quiet:
+        print(f"\n{result['answer']}\n")
+    return 0
+
+
+def cmd_workflow(args: argparse.Namespace) -> int:
+    """Runs the fixed HR entitlement workflow (hardcoded steps, no loop)."""
+    from policy_rag.agent.workflow import FixedWorkflow
+
+    workflow = FixedWorkflow(verbose=not args.quiet)
+    result = workflow.run(args.question)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif args.quiet:
+        print(f"\n{result['answer']}\n")
+    return 0
+
+
+def cmd_race(args: argparse.Namespace) -> int:
+    """Races the agent against the fixed workflow over 10 questions and outputs race.csv."""
+    from policy_rag.agent.race import run_race
+
+    run_race(output_csv_path=args.output, verbose=args.verbose)
+    return 0
+
+
+def cmd_budget_demo(args: argparse.Namespace) -> int:
+    """Demonstrates clean termination when all 4 budgets are reached."""
+    from scripts.run_budget_demo import demo_budget_termination
+
+    demo_budget_termination()
+    return 0
+
+
+def cmd_memory_bonus(args: argparse.Namespace) -> int:
+    """Runs the Week 7 Bonus: 30-turn conversation + process-restart fact persistence."""
+    from policy_rag.agent.memory import run_30_turn_bonus_experiment
+
+    run_30_turn_bonus_experiment()
+    return 0
+
+
+# --- Week 8: Trajectory Evaluation, Gap Analysis & Injection Defense ----------
+
+def cmd_eval_trajectory(args: argparse.Namespace) -> int:
+    """Runs the Week 8 trajectory evaluation benchmark across 20 cases."""
+    from policy_rag.agent.week8_runner import run_week8_benchmark
+
+    run_week8_benchmark(output_csv_path=args.output, verbose=args.verbose)
+    return 0
+
+
+def cmd_test_injection(args: argparse.Namespace) -> int:
+    """Demonstrates prompt injection attack vectors against unprotected baseline vs defended agent."""
+    from policy_rag.agent.week8_runner import run_injection_demo
+
+    run_injection_demo(verbose=not args.quiet)
+    return 0
+
+
+def cmd_fix_benchmark(args: argparse.Namespace) -> int:
+    """Measures the fix to the top failure mode (Outcome-vs-Trajectory Gap & Statutory Verification)."""
+    from policy_rag.agent.week8_runner import run_week8_benchmark
+
+    run_week8_benchmark(output_csv_path=args.output, verbose=args.verbose)
+    return 0
+
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Builds the argument parser with every command.
 
@@ -360,7 +443,51 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_cmd.set_defaults(func=cmd_eval_judge_validate)
 
+    # --- Week 7: Hand-built Agent vs Fixed Workflow commands -----------------
+    agent_cmd = commands.add_parser("agent", help="run the hand-built agent loop with visible steps")
+    agent_cmd.add_argument("question", help="the entitlement question to answer")
+    agent_cmd.add_argument("--max-iters", type=int, default=6, help="max iterations budget")
+    agent_cmd.add_argument("--max-tokens", type=int, default=8000, help="max token budget")
+    agent_cmd.add_argument("--max-cost", type=float, default=0.05, help="max cost budget ($)")
+    agent_cmd.add_argument("--max-time", type=float, default=15.0, help="wall-clock limit (s)")
+    agent_cmd.add_argument("--quiet", action="store_true", help="suppress step logs")
+    agent_cmd.add_argument("--json", action="store_true", help="output JSON envelope")
+    agent_cmd.set_defaults(func=cmd_agent)
+
+    wf_cmd = commands.add_parser("workflow", help="run the fixed 4-step workflow (no loop)")
+    wf_cmd.add_argument("question", help="the entitlement question to answer")
+    wf_cmd.add_argument("--quiet", action="store_true", help="suppress step logs")
+    wf_cmd.add_argument("--json", action="store_true", help="output JSON envelope")
+    wf_cmd.set_defaults(func=cmd_workflow)
+
+    race_cmd = commands.add_parser("race", help="race agent vs workflow over 10 questions to produce race.csv")
+    race_cmd.add_argument("--output", default="race.csv", help="output CSV file path")
+    race_cmd.add_argument("--verbose", "-v", action="store_true", help="verbose step output")
+    race_cmd.set_defaults(func=cmd_race)
+
+    bdemo_cmd = commands.add_parser("budget-demo", help="demonstrate clean termination on all 4 budgets")
+    bdemo_cmd.set_defaults(func=cmd_budget_demo)
+
+    mem_cmd = commands.add_parser("memory-bonus", help="run the 30-turn memory and restart persistence experiment")
+    mem_cmd.set_defaults(func=cmd_memory_bonus)
+
+    # --- Week 8: Trajectory Evaluation & Prompt Injection Commands -----------
+    eval_traj_cmd = commands.add_parser("eval-trajectory", help="run Week 8 trajectory evaluation and gap benchmark across 20 cases")
+    eval_traj_cmd.add_argument("--output", default="reports/week8_trajectory_eval.csv", help="output CSV file path")
+    eval_traj_cmd.add_argument("--verbose", "-v", action="store_true", help="verbose step output")
+    eval_traj_cmd.set_defaults(func=cmd_eval_trajectory)
+
+    test_inj_cmd = commands.add_parser("test-injection", help="demonstrate prompt injection attack vs defense")
+    test_inj_cmd.add_argument("--quiet", action="store_true", help="suppress detailed output")
+    test_inj_cmd.set_defaults(func=cmd_test_injection)
+
+    fix_bench_cmd = commands.add_parser("fix-benchmark", help="measure fix to top failure mode and gap closure")
+    fix_bench_cmd.add_argument("--output", default="reports/week8_trajectory_eval.csv", help="output CSV file path")
+    fix_bench_cmd.add_argument("--verbose", "-v", action="store_true", help="verbose step output")
+    fix_bench_cmd.set_defaults(func=cmd_fix_benchmark)
+
     return parser
+
 
 
 def main(argv: list = None) -> int:
