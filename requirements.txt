@@ -9,3 +9,6 @@ uvicorn
 pydantic
 python-dotenv
 scikit-learn
+mcp
+fastmcp
+llama-index-tools-mcp

@@ -1,0 +1,10 @@
+Tool count BEFORE adding HRIS server: 2
+Tools discovered:
+- get_handbook_rule
+- get_jurisdiction_rules
+
+Tool count AFTER adding HRIS server: 3
+Tools discovered:
+- get_handbook_rule
+- get_jurisdiction_rules
+- get_employee_record

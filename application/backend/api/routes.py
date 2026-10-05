@@ -11,6 +11,8 @@ from application.backend.observability.telemetry import telemetry_service
 from application.backend.retrieval.engine import hybrid_retriever
 from application.backend.ingestion.pipeline import run_ingestion_pipeline
 from application.backend.core.config import settings
+import os
+import sys
 
 api_router = APIRouter(prefix="/api")
 
@@ -95,6 +97,36 @@ async def handle_workflow_run(request: WorkflowRequest) -> Dict[str, Any]:
             topic=request.topic
         )
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/mcp/discover")
+async def handle_mcp_discover() -> Dict[str, Any]:
+    """Dynamically connects to the local MCP server and lists discovered tools."""
+    try:
+        from llama_index.tools.mcp import BasicMCPClient, McpToolSpec
+        
+        # Resolve the hris_server.py path (which is currently in curriculum folder)
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        server_path = os.path.join(base_dir, "curriculum", "week_09_mcp_and_multiagent", "hris_server.py")
+        
+        client = BasicMCPClient(command_or_url=sys.executable, args=[server_path])
+        mcp_tool_spec = McpToolSpec(client=client)
+        
+        tools = await mcp_tool_spec.to_tool_list_async()
+        
+        discovered_tools = []
+        for t in tools:
+            discovered_tools.append({
+                "name": t.metadata.name,
+                "description": t.metadata.description
+            })
+            
+        return {
+            "tools_count": len(discovered_tools),
+            "tools": discovered_tools
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

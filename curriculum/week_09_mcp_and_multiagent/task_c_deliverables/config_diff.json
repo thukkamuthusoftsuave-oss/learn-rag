@@ -1,0 +1,15 @@
+--- mcp_config.json (Before)
++++ mcp_config.json (After)
+@@ -2,5 +2,9 @@
+   "mcpServers": {
+     "policy-search": {
+       "command": "python",
+       "args": ["policy_server.py"]
+-    }
++    },
++    "hris-server": {
++      "command": "python",
++      "args": ["hris_server.py"]
++    }
+   }
+ }

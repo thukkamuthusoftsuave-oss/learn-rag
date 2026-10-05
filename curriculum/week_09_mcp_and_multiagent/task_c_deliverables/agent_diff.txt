@@ -1,0 +1,13 @@
+--- agent.py (Before HRIS)
++++ agent.py (After HRIS)
+@@ -10,12 +10,12 @@
+     tools = []
+     for server_name, server_config in mcp_config["mcpServers"].items():
+         client = BasicMCPClient(command_or_url=server_config["command"], args=server_config["args"])
+         mcp_tool_spec = McpToolSpec(client=client)
+         tools.extend(await mcp_tool_spec.to_tool_list_async())
+     return tools
+
+# ZERO LINES CHANGED. 
+# The agent module automatically iterates over all servers defined in mcp_config.json 
+# and registers all discovered tools dynamically.
