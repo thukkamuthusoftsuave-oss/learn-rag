@@ -47,38 +47,55 @@ class AsyncLLMClient:
             for c in retrieved_chunks
         ])
 
-        # 1. If API key is available, call OpenRouter asynchronously
-        if self.api_key and len(self.api_key.strip()) > 10:
+        # 1. If API key is available, call OpenRouter or Groq asynchronously
+        api_key = settings.groq_api_key or self.api_key
+        if api_key and len(api_key.strip()) > 10:
             try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    response = await client.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {self.api_key}",
-                            "HTTP-Referer": "https://enterprise-policy-assistant.internal",
-                            "X-Title": "HR-207 Policy Assistant"
-                        },
-                        json={
-                            "model": self.model,
-                            "temperature": settings.llm_temperature,
-                            "max_tokens": settings.llm_max_tokens,
-                            "messages": [
-                                {"role": "system", "content": system_prompt or SYSTEM_PROMPT},
-                                {"role": "user", "content": f"RETRIEVED CONTEXT:\n{context_str}\n\nUSER QUESTION: {query}"}
-                            ]
-                        }
-                    )
-                    if response.status_code == 200:
-                        res_json = response.json()
-                        answer = res_json["choices"][0]["message"]["content"].strip()
-                        citations = re.findall(r"\[\[(.*?)\]\]", answer)
-                        return {
-                            "answer": answer,
-                            "citations": citations,
-                            "model": self.model,
-                            "is_llm": True
-                        }
+                # Groq overrides OpenRouter if available
+                if settings.groq_api_key:
+                    endpoint = "https://api.groq.com/openai/v1/chat/completions"
+                    model_to_use = getattr(settings, "groq_model", "openai/gpt-oss-20b")
+                    headers = {"Authorization": f"Bearer {api_key}"}
+                else:
+                    endpoint = "https://openrouter.ai/api/v1/chat/completions"
+                    model_to_use = self.model
+                    headers = {
+                        "Authorization": f"Bearer {api_key}",
+                        "HTTP-Referer": "https://enterprise-policy-assistant.internal",
+                        "X-Title": "HR-207 Policy Assistant"
+                    }
+                    
+                import asyncio
+                import requests
+
+                payload = {
+                    "model": model_to_use,
+                    "temperature": settings.llm_temperature,
+                    "max_tokens": settings.llm_max_tokens,
+                    "messages": [
+                        {"role": "system", "content": system_prompt or SYSTEM_PROMPT},
+                        {"role": "user", "content": f"RETRIEVED CONTEXT:\n{context_str}\n\nUSER QUESTION: {query}"}
+                    ]
+                }
+
+                def _call_api():
+                    return requests.post(endpoint, headers=headers, json=payload, timeout=25)
+
+                response = await asyncio.to_thread(_call_api)
+                if response.status_code == 200:
+                    res_json = response.json()
+                    answer = res_json["choices"][0]["message"]["content"].strip()
+                    citations = re.findall(r"\[\[(.*?)\]\]", answer)
+                    return {
+                        "answer": answer,
+                        "citations": citations,
+                        "model": model_to_use,
+                        "is_llm": True
+                    }
+                else:
+                    print(f"[-] LLM API Error: {response.status_code} - {response.text}")
             except Exception as e:
+                print(f"[-] LLM Exception: {str(e)}")
                 # Log and proceed to high-precision factual extractor fallback
                 pass
 
@@ -113,16 +130,20 @@ class AsyncLLMClient:
         if relevant_sentences:
             extracted_text = " ".join([s for _, s in relevant_sentences[:2]])
             answer = f"According to {section_tag} for {reg}: {extracted_text} [[{section_tag}]]"
+            citations = [section_tag]
+            return {
+                "answer": answer,
+                "citations": citations,
+                "model": "offline-semantic-extractor",
+                "is_llm": False
+            }
         else:
-            answer = f"Based on the HR-207 policy addendum for {reg}: {text[:260].strip()}... [[{section_tag}]]"
-
-        citations = [section_tag]
-        return {
-            "answer": answer,
-            "citations": citations,
-            "model": "offline-semantic-extractor",
-            "is_llm": False
-        }
+            return {
+                "answer": MANDATED_REFUSAL_PHRASE,
+                "citations": [],
+                "model": "offline-deterministic",
+                "is_llm": False
+            }
 
 
 llm_client = AsyncLLMClient()

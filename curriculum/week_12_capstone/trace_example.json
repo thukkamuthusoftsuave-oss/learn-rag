@@ -1,0 +1,160 @@
+{
+  "trace_id": "tr-capstone-20261012-094522-8f1b3c",
+  "root_span_id": "span-root-001",
+  "timestamp_start": "2026-10-12T09:45:22.102Z",
+  "timestamp_end": "2026-10-12T09:45:22.758Z",
+  "total_latency_ms": 656.4,
+  "total_tokens_in": 418,
+  "total_tokens_out": 132,
+  "total_cost_usd": 0.0001419,
+  "request": {
+    "requester_id": "EMP-IN-001",
+    "query": "How many weeks of maternity leave am I entitled to as a Grade 3 employee in India?"
+  },
+  "pii_audit_status": {
+    "policy_enforced": "LEAST_PRIVILEGE_PII_REDACTION_v2",
+    "redacted_fields": [
+      "grade",
+      "base_salary",
+      "leave_balances"
+    ],
+    "unmasked_fields": [
+      "employee_id",
+      "entity",
+      "tenure_years"
+    ]
+  },
+  "spans": [
+    {
+      "span_id": "span-01-ingress",
+      "parent_span_id": "span-root-001",
+      "name": "request_ingress_and_trace_init",
+      "service": "capstone_api_gateway",
+      "start_time_offset_ms": 0.0,
+      "latency_ms": 2.1,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "attributes": {
+        "client_channel": "Slack_DM_HRSharedServices",
+        "trace_id_propagated": "tr-capstone-20261012-094522-8f1b3c"
+      }
+    },
+    {
+      "span_id": "span-02-guardrail",
+      "parent_span_id": "span-01-ingress",
+      "name": "adversarial_leak_and_injection_check",
+      "service": "security_guardrail",
+      "start_time_offset_ms": 2.1,
+      "latency_ms": 1.4,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "attributes": {
+        "colleague_lookup_detected": false,
+        "prompt_injection_detected": false,
+        "action": "PROCEED"
+      }
+    },
+    {
+      "span_id": "span-03-mcp-tool-record",
+      "parent_span_id": "span-02-guardrail",
+      "name": "mcp_tool_invocation::get_employee_record",
+      "service": "hr_policy_mcp_server",
+      "transport": "mcp_stdio_jsonrpc",
+      "start_time_offset_ms": 3.5,
+      "latency_ms": 18.2,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "trace_context_survived": true,
+      "telemetry_log_entry": {
+        "trace_id": "tr-capstone-20261012-094522-8f1b3c",
+        "employee_id": "EMP-IN-001",
+        "entity": "India",
+        "grade": "[REDACTED_PII]",
+        "base_salary": "[REDACTED_PII]",
+        "leave_balances": "[REDACTED_PII]",
+        "tenure_years": 3.2
+      }
+    },
+    {
+      "span_id": "span-04-mcp-tool-search",
+      "parent_span_id": "span-03-mcp-tool-record",
+      "name": "mcp_tool_invocation::search_policy_docs",
+      "service": "hr_policy_mcp_server",
+      "transport": "mcp_stdio_jsonrpc",
+      "start_time_offset_ms": 21.7,
+      "latency_ms": 24.5,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "trace_context_survived": true,
+      "attributes": {
+        "query_term": "maternity leave statutory duration",
+        "entity_scope": "India",
+        "temporal_version": "HR-LEAVE-2025-v2.0",
+        "retrieved_chunks_count": 2,
+        "top_chunk_id": "INDIA-ANNEX-CL-2.1"
+      }
+    },
+    {
+      "span_id": "span-05-precedence-engine",
+      "parent_span_id": "span-04-mcp-tool-search",
+      "name": "annex_precedence_resolution",
+      "service": "policy_arbitration_engine",
+      "start_time_offset_ms": 46.2,
+      "latency_ms": 0.8,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "attributes": {
+        "handbook_clause": "HB-SEC-4.1 (12 weeks general)",
+        "annex_clause": "INDIA-ANNEX-CL-2.1 (26 weeks statutory)",
+        "resolution": "SILENT_ANNEX_OVERRIDE_APPLIED"
+      }
+    },
+    {
+      "span_id": "span-06-llm-synthesis",
+      "parent_span_id": "span-05-precedence-engine",
+      "name": "openai_chat_completion::gpt-4o-mini",
+      "service": "llm_inference_provider",
+      "start_time_offset_ms": 47.0,
+      "latency_ms": 608.2,
+      "tokens": {
+        "in": 418,
+        "out": 132
+      },
+      "cost_usd": 0.0001419,
+      "attributes": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "finish_reason": "stop",
+        "temperature": 0.0
+      }
+    },
+    {
+      "span_id": "span-07-assertion-validator",
+      "parent_span_id": "span-root-001",
+      "name": "citation_and_compliance_validator",
+      "service": "guardrail_judge",
+      "start_time_offset_ms": 655.2,
+      "latency_ms": 1.2,
+      "tokens": { "in": 0, "out": 0 },
+      "cost_usd": 0.0,
+      "attributes": {
+        "citation_clause_present": true,
+        "policy_version_present": true,
+        "effective_date_present": true,
+        "pii_leakage_detected": false,
+        "validation_outcome": "COMPLIANT"
+      }
+    }
+  ],
+  "final_response": {
+    "answer": "As an employee in the India entity, you are entitled to 26 weeks of paid maternity leave for your first two children pursuant to statutory overrides. This entitlement supersedes the general handbook allowance of 12 weeks.",
+    "citations": [
+      {
+        "clause": "Clause 2.1 (Maternity Benefit Override)",
+        "policy_version": "HR-LEAVE-2025-v2.0",
+        "effective_date": "2025-01-01",
+        "document": "India Entity Specific Policy Annex (Overriding General Handbook Section 4.1)"
+      }
+    ],
+    "escalated_to_hrbp": false
+  }
+}

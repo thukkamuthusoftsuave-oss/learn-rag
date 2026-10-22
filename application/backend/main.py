@@ -7,6 +7,14 @@ from application.backend.api.routes import api_router
 from application.backend.retrieval.engine import hybrid_retriever
 from application.backend.core.config import settings
 
+# Setup LlamaIndex Debug Handler to print REAL live traces to the console
+import llama_index.core
+from llama_index.core.callbacks import CallbackManager, LlamaDebugHandler
+print("[*] Enabling Real-Time LlamaIndex Trace Logging...")
+llama_debug = LlamaDebugHandler(print_trace_on_end=True)
+callback_manager = CallbackManager([llama_debug])
+llama_index.core.Settings.callback_manager = callback_manager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

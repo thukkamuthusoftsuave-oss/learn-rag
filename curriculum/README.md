@@ -16,6 +16,9 @@ This directory contains the modular, week-by-week implementation of all concepts
 | **[Week 6](file:///d:/learn-rag/curriculum/week_06_advanced_rag_multiturn_and_query_condensation)** | Advanced RAG & Multi-Turn Chat | Contextual query condensation, session management | Rewrites ambiguous follow-up questions before retrieval; verifies citation tags |
 | **[Week 7](file:///d:/learn-rag/curriculum/week_07_agent_vs_fixed_workflow)** | AI Agents vs Fixed Workflows | Hand-built ReAct loop vs Deterministic DAG workflow | 8 Numbers Table: Workflow is 3.3x faster, 8.7x fewer tokens, 6.7x cheaper |
 | **[Week 8](file:///d:/learn-rag/curriculum/week_08_trajectory_eval_and_injection_defense)** | Trajectory Evals & Injection Defense | Outcome-vs-Trajectory Gap, 4-Layer Defense-in-Depth | Neutralizes indirect prompt injection; closes outcome-vs-trajectory gap |
+| **[Week 9](file:///d:/learn-rag/curriculum/week_09_mcp_and_multiagent)** | Model Context Protocol (MCP) | Dynamic tool discovery over JSON-RPC, external HRIS MCP server | Decouples tools from agent prompt; dynamic capability discovery |
+| **[Week 10](file:///d:/learn-rag/curriculum/week_10_multi_agent_and_a2a)** | Multi-Agent & A2A Orchestration | Manager + 2 specialists vs single agent race on quality, latency, tokens, cost | Honest measurement: proves single agent is faster & cheaper for standard RAG |
+| **[Week 11](file:///d:/learn-rag/curriculum/week_11_production_and_observability)** | Production Observability & Failure-Test Loop | Support drill on production logs, span costs, eval regression tests, 10x scale | Finds vague failure in logs (<2m), turns failure into permanent regression test (RED->GREEN) |
 
 ---
 
@@ -47,4 +50,10 @@ python curriculum/week_07_agent_vs_fixed_workflow/run_race_benchmark.py
 
 # Week 8: Trajectory Evaluation & Prompt Injection Defense
 python curriculum/week_08_trajectory_eval_and_injection_defense/run_eval.py
+
+# Week 10: Multi-Agent vs Single Agent Race
+python curriculum/week_10_multi_agent_and_a2a/multi_agent_race.py
+
+# Week 11: Production Failure-to-Test Loop & Observability Drill
+python curriculum/week_11_production_and_observability/eval_suite_drill.py
 ```

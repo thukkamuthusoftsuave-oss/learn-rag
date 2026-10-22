@@ -5,9 +5,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+env_path = BASE_DIR / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 
 class Settings(BaseModel):
@@ -31,6 +31,8 @@ class Settings(BaseModel):
     
     # LLM Settings
     openrouter_api_key: str = Field(default_factory=lambda: os.getenv("OPENROUTER_API_KEY", ""))
+    groq_api_key: str = Field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
+    groq_model: str = Field(default_factory=lambda: os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"))
     default_llm_model: str = Field(default_factory=lambda: os.getenv("RAG_MODEL", "google/gemini-flash-1.5"))
     llm_temperature: float = 0.0
     llm_max_tokens: int = 512

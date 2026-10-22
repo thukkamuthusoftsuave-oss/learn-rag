@@ -57,6 +57,30 @@ class TelemetryService:
         except Exception:
             pass
 
+        # === WEEK 11 OBSERVABILITY DRILL: PRINT TO CONSOLE ===
+        print("\n" + "="*60)
+        print("[*] [LIVE TELEMETRY TRACE] - WEEK 11 OBSERVABILITY")
+        print("="*60)
+        print(f"Time: {time.ctime(trace_record['timestamp'])}")
+        print(f"Latency: {trace_record.get('latency_ms', 0)} ms")
+        print(f"Tokens Used: {trace_record.get('tokens_used', 0)}")
+        
+        # Calculate cost based on gpt-4o-mini ($0.15 / 1M tokens)
+        tokens = trace_record.get('tokens_used', 0)
+        cost = (tokens / 1000000) * 0.15
+        print(f"Cost: ${cost:.6f}")
+        print("-" * 60)
+        
+        chunks = trace_record.get('retrieved_chunks', [])
+        if chunks:
+            print("Retrieved Context IDs:")
+            for c in chunks:
+                print(f"  - {c.get('node_id', 'Unknown ID')} (Score: {c.get('score', 0):.3f})")
+        else:
+            print("Retrieved Context IDs: NONE")
+            
+        print("="*60 + "\n")
+
     def _classify(self, trace: Dict[str, Any]) -> str:
         """Assigns formal error taxonomy classification."""
         answer = trace.get("answer", "")

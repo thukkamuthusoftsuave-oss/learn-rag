@@ -45,7 +45,8 @@ class ChatService:
         chat_history: Optional[List[Dict[str, str]]] = None,
         region: Optional[str] = None,
         top_k: int = 5,
-        hybrid: bool = True
+        hybrid: bool = True,
+        system_prompt: Optional[str] = None
     ) -> Dict[str, Any]:
         """Asynchronously processes a chat inquiry through condensation, hybrid retrieval, and synthesis."""
         start_time = time.perf_counter()
@@ -83,7 +84,8 @@ class ChatService:
         # 4. Asynchronous Synthesis
         synthesis_result = await llm_client.generate_response(
             query=condensed_query,
-            retrieved_chunks=retrieved_chunks
+            retrieved_chunks=retrieved_chunks,
+            system_prompt=system_prompt
         )
         raw_answer = synthesis_result["answer"]
         citations = synthesis_result["citations"]
