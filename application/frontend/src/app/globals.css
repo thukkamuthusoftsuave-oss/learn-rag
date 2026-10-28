@@ -1,77 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --bg-main: #090d16;
-  --bg-card: rgba(15, 23, 42, 0.75);
-  --border-card: rgba(51, 65, 85, 0.5);
-  --accent-cyan: #06b6d4;
-  --accent-indigo: #6366f1;
-  --accent-purple: #a855f7;
-  --accent-emerald: #10b981;
-  --accent-rose: #f43f5e;
-  --accent-amber: #f59e0b;
+@theme inline {
+  --color-cherry-950: #1a0610;
+  --color-cherry-900: #250a16;
+  --color-cherry-800: #381121;
+  --color-cherry-700: #55203a;
+  --color-champagne: #f3e5c8;
+  --color-champagne-muted: #bfa98a;
+  --color-rose: #d9a08f;
+  --color-rose-deep: #b76e79;
+
+  --font-display: var(--font-bodoni), "Didot", serif;
+  --font-sans: var(--font-schibsted), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: #f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
-  background-attachment: fixed;
+  background: var(--color-cherry-950);
+  color: var(--color-champagne);
+  font-family: var(--font-sans);
 }
 
-/* Glassmorphic card utility */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+::selection {
+  background: var(--color-rose-deep);
+  color: var(--color-cherry-950);
 }
 
-.glass-panel-hover {
-  transition: all 0.25s ease-in-out;
+:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
-  transform: translateY(-2px);
+/* Citation stamp, styled after the purity hallmark punched into gold */
+.hallmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.05em 0.45em 0.1em;
+  border: 1px solid color-mix(in srgb, var(--color-rose) 70%, transparent);
+  border-radius: 2px;
+  color: var(--color-rose);
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: 0.12em;
 }
 
-/* Glow effects */
-.glow-cyan {
-  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.5);
+.hallmark::before {
+  content: "";
+  width: 0.38em;
+  height: 0.38em;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-.glow-indigo {
-  box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.5);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.5);
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

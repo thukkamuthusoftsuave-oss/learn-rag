@@ -1,13 +1,14 @@
 """High-Performance Asynchronous FastAPI Routes for Policy Assistant."""
 
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel, Field
 
 from application.backend.chat.service import chat_service
 from application.backend.agent.orchestrator import policy_orchestrator
 from application.backend.security.defense import security_defense
 from application.backend.observability.telemetry import telemetry_service
+from application.backend.observability.langfuse_telemetry import capstone_telemetry
 from application.backend.retrieval.engine import hybrid_retriever
 from application.backend.ingestion.pipeline import run_ingestion_pipeline
 from application.backend.core.config import settings
@@ -26,6 +27,7 @@ class ChatRequest(BaseModel):
     region: Optional[str] = Field(default=None, description="Optional region filter (US, UK, EMEA, APAC, LATAM, NA)")
     top_k: int = Field(default=5, ge=1, le=20)
     hybrid: bool = Field(default=True, description="Enable hybrid BM25 + ChromaDB RRF retrieval")
+    session_id: Optional[str] = Field(default=None, description="Conversation id; groups turns into one Langfuse session")
 
 
 class AgentRequest(BaseModel):
@@ -58,17 +60,40 @@ async def get_health() -> Dict[str, Any]:
 
 
 @api_router.post("/chat")
-async def handle_chat(request: ChatRequest, background_tasks: BackgroundTasks) -> Dict[str, Any]:
-    """Asynchronously processes a chat inquiry, offloading telemetry logging to background tasks."""
+async def handle_chat(request: ChatRequest, http_request: Request) -> Dict[str, Any]:
+    """Answers a question. The router picks RAG, a fixed workflow, an agent, a squad or the policy desk."""
+    config = {
+        "top_k": request.top_k, "hybrid": request.hybrid, "rrf_k": settings.rrf_k,
+        "embedding_model": settings.embedding_model_name, "llm_model": settings.groq_model if settings.groq_api_key else settings.default_llm_model,
+        "temperature": settings.llm_temperature, "max_tokens": settings.llm_max_tokens, "app_version": settings.version,
+    }
+    client = {
+        "user_agent": http_request.headers.get("user-agent"),
+        "origin": http_request.headers.get("origin"),
+        "client_host": http_request.client.host if http_request.client else None,
+    }
     try:
-        envelope = await chat_service.answer_query(
-            query=request.query,
-            chat_history=request.history,
-            region=request.region,
-            top_k=request.top_k,
-            hybrid=request.hybrid
-        )
-        # Non-blocking telemetry write via background task
+        with capstone_telemetry.trace(
+            "rag_chat",
+            input={"query": request.query, "region": request.region},
+            session_id=request.session_id,
+            tags=["chat", request.region or "All"],
+            metadata={"turn": len(request.history or []) + 1, "config": config, "client": client},
+        ) as t:
+            envelope = await chat_service.handle(
+                query=request.query,
+                chat_history=request.history,
+                region=request.region,
+                top_k=request.top_k,
+                hybrid=request.hybrid
+            )
+            t.update(output=envelope["answer"], metadata={"route": envelope["route"], "security_status": envelope["security_status"]})
+            t.local["route"] = envelope["route"]
+            t.local["status"] = envelope["security_status"]
+            t.local["final_response"] = {"answer": envelope["answer"], "citations": envelope.get("citations", []),
+                                         "route_reasons": envelope.get("route_reasons")}
+        envelope["langfuse_trace_id"] = t.local["trace_id"]
+        envelope["langfuse_url"] = t.local.get("langfuse_url")
         telemetry_service.record_trace(envelope)
         return envelope
     except Exception as e:
@@ -831,12 +856,19 @@ async def handle_week11_search_logs(request: Week11SearchRequest) -> Dict[str, A
 
 
 # ==============================================================================
-# WEEK 12 CAPSTONE: VARIANT C - POLICY ANSWER DESK ENDPOINTS
+# WEEK 12 CAPSTONE: VARIANT C - POLICY ANSWER DESK & OBSERVABILITY ENDPOINTS
 # ==============================================================================
+
+from application.backend.capstone.engine import capstone_engine
+from application.backend.observability.langfuse_telemetry import capstone_telemetry
+from curriculum.week_12_capstone.data.employees import EMPLOYEE_DATABASE as CAPSTONE_EMPLOYEES
+from curriculum.week_12_capstone.hr_policy_mcp_server import mcp_server as capstone_mcp
+from fastapi.responses import PlainTextResponse
+
 
 class Week12QueryRequest(BaseModel):
     query: str = Field(description="Policy question to evaluate")
-    employee_id: str = Field(default="EMP-IN-001", description="Employee ID")
+    employee_id: str = Field(default="EMP-IND-301", description="Employee ID")
     force_year: Optional[int] = Field(default=None, description="Force policy year (2024 or 2025)")
 
 
@@ -844,11 +876,22 @@ class Week12EvalRequest(BaseModel):
     limit: Optional[int] = Field(default=30, description="Max cases to run (up to 30)")
 
 
+class McpExecuteRequest(BaseModel):
+    tool_name: str = Field(description="Name of MCP tool to execute")
+    arguments: Dict[str, Any] = Field(default_factory=dict, description="Tool input arguments")
+
+
+class ScoreTraceRequest(BaseModel):
+    name: str = Field(default="accuracy", description="Score metric name")
+    value: float = Field(description="Score value (0.0 to 1.0 or 1.0 to 5.0)")
+    comment: Optional[str] = Field(default=None, description="Optional evaluator notes")
+
+
+@api_router.post("/capstone/query")
 @api_router.post("/week12/capstone/query")
-async def handle_week12_query(request: Week12QueryRequest) -> Dict[str, Any]:
-    """Runs a single live policy query through the integrated Capstone agent."""
-    from curriculum.week_12_capstone.capstone_agent import capstone_agent
-    res = await capstone_agent.answer_policy_query(
+async def handle_capstone_query(request: Week12QueryRequest) -> Dict[str, Any]:
+    """Runs a single live policy query through the integrated Capstone agent with Langfuse tracing."""
+    res = await capstone_engine.execute_query(
         query=request.query,
         employee_id=request.employee_id,
         force_year=request.force_year
@@ -856,42 +899,43 @@ async def handle_week12_query(request: Week12QueryRequest) -> Dict[str, Any]:
     return res
 
 
+@api_router.post("/capstone/run_eval")
 @api_router.post("/week12/capstone/run_eval")
-async def handle_week12_run_eval(request: Week12EvalRequest) -> Dict[str, Any]:
+async def handle_capstone_run_eval(request: Week12EvalRequest) -> Dict[str, Any]:
     """Executes the full 30-case integration eval suite against the Capstone agent."""
     from curriculum.week_12_capstone.run_capstone_eval import CAPSTONE_TEST_CASES, programmatic_assertions
-    from curriculum.week_12_capstone.capstone_agent import capstone_agent
     import time
-    
+
     cases_to_run = CAPSTONE_TEST_CASES[:min(request.limit or 30, len(CAPSTONE_TEST_CASES))]
     results = []
-    taxonomy_stats = {}
+    taxonomy_stats: Dict[str, Dict[str, int]] = {}
     passed_count = 0
     total_tokens = 0
     total_latency_ms = 0.0
     start_all = time.perf_counter()
-    
+
     for tc in cases_to_run:
         t0 = time.perf_counter()
-        res = await capstone_agent.answer_policy_query(
+        res = await capstone_engine.execute_query(
             query=tc["query"],
             employee_id=tc["employee_id"],
-            force_year=tc.get("force_year")
+            force_year=tc.get("force_year"),
+            client_channel="Automated_Eval_Runner"
         )
         elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
         total_latency_ms += elapsed_ms
         total_tokens += res.get("tokens_used", 500)
-        
+
         passed, reason = programmatic_assertions(tc, res)
         tax = tc["taxonomy"]
         if tax not in taxonomy_stats:
             taxonomy_stats[tax] = {"total": 0, "passed": 0}
         taxonomy_stats[tax]["total"] += 1
-        
+
         if passed:
             passed_count += 1
             taxonomy_stats[tax]["passed"] += 1
-            
+
         results.append({
             "id": tc["id"],
             "taxonomy": tax,
@@ -900,40 +944,107 @@ async def handle_week12_run_eval(request: Week12EvalRequest) -> Dict[str, Any]:
             "status": "PASS" if passed else "FAIL",
             "reason": reason,
             "latency_ms": elapsed_ms,
+            "cost_usd": res.get("cost_usd", 0.00014),
+            "trace_id": res.get("trace_id"),
             "citations": res.get("citations", []),
-            "answer_preview": res.get("answer", "")[:180] + ("..." if len(res.get("answer", "")) > 180 else "")
+            "answer_preview": (res.get("answer") or "")[:180] + ("..." if len(res.get("answer") or "") > 180 else "")
         })
-        
+
     total_time = round(time.perf_counter() - start_all, 2)
-    pass_rate = round((passed_count / len(cases_to_run)) * 100, 1)
-    
+    pass_rate = round((passed_count / len(cases_to_run)) * 100, 1) if cases_to_run else 100.0
+
     return {
         "status": "success",
         "total_cases": len(cases_to_run),
         "passed_cases": passed_count,
         "pass_rate_pct": pass_rate,
         "judge_agreement_pct": 100.0,
-        "mean_latency_ms": round(total_latency_ms / len(cases_to_run), 1),
+        "mean_latency_ms": round(total_latency_ms / len(cases_to_run), 1) if cases_to_run else 0.0,
         "total_time_s": total_time,
+        "total_tokens": total_tokens,
         "taxonomy_stats": taxonomy_stats,
         "cases": results
     }
 
 
+@api_router.get("/capstone/employees")
+async def get_capstone_employees() -> List[Dict[str, Any]]:
+    """Returns list of demo employees across entities with sanitized public metadata."""
+    demo_list = []
+    for emp_id, emp in CAPSTONE_EMPLOYEES.items():
+        demo_list.append({
+            "id": emp_id,
+            "name": emp["name"],
+            "entity": emp["entity"],
+            "grade": emp["grade"],
+            "title": emp["title"],
+            "tenure_years": emp.get("tenure_years", 1.0),
+            "category": "Adversarial" if "INJECT" in emp_id else ("Executive" if emp["grade"] == 7 else "Standard")
+        })
+    return demo_list
+
+
+@api_router.get("/capstone/mcp/tools")
+async def get_capstone_mcp_tools() -> List[Dict[str, Any]]:
+    """Returns all 4 registered MCP capability tools with schema documentation."""
+    return [
+        {
+            "name": "get_employee_record",
+            "description": "Resolves verified employee grade, entity jurisdiction, and tenure from HRIS.",
+            "parameters": {"employee_id": "string"},
+            "pii_policy": "Strict log redaction: base_salary, exact leave_balances, and grade masked in audit logs."
+        },
+        {
+            "name": "check_leave_balance",
+            "description": "Fetches current available balance for a specific leave category.",
+            "parameters": {"employee_id": "string", "leave_type": "string"},
+            "pii_policy": "Caller-only authorization; strictly restricted from colleague queries."
+        },
+        {
+            "name": "search_policy_docs",
+            "description": "Performs entity-scoped hybrid retrieval across Global Handbook and Statutory Annexes with temporal versioning.",
+            "parameters": {"query": "string", "entity": "string (India | UK)", "effective_year": "int (2024 | 2025)"},
+            "pii_policy": "Public company policy document store."
+        },
+        {
+            "name": "escalate_to_hrbp",
+            "description": "Dispatches discretionary policy exception requests (Grade 7 executive terms, compassionate >5 days, sabbatical splits) to an HR Business Partner.",
+            "parameters": {"employee_id": "string", "issue_summary": "string", "policy_clause": "string"},
+            "pii_policy": "Creates traceable escalation ticket with priority routing."
+        }
+    ]
+
+
+@api_router.post("/capstone/mcp/execute")
+async def execute_capstone_mcp_tool(request: McpExecuteRequest) -> Dict[str, Any]:
+    """Directly invokes an MCP tool via stdio/internal dispatch."""
+    t0 = time.perf_counter()
+    res = capstone_mcp.dispatch(request.tool_name, request.arguments)
+    lat_ms = round((time.perf_counter() - t0) * 1000, 2)
+    return {
+        "tool_name": request.tool_name,
+        "arguments": request.arguments,
+        "latency_ms": lat_ms,
+        "result": res
+    }
+
+
+@api_router.get("/capstone/overview")
 @api_router.get("/week12/capstone/overview")
-async def handle_week12_overview() -> Dict[str, Any]:
+async def handle_capstone_overview() -> Dict[str, Any]:
     """Returns metadata, artifact files, and checklist overview for Week 12 Capstone."""
     return {
         "track": "Variant C · Policy Answer Desk",
         "domain": "HR Shared-Services Policy Automation",
         "jurisdictions": ["India (Entity Annex)", "United Kingdom (Entity Annex)"],
         "policy_versions": ["HR-LEAVE-2024-v1.0 (Superseded)", "HR-LEAVE-2025-v2.0 (Active)"],
+        "observability_engine": "Langfuse Cloud + Local OpenTelemetry Dual-Sync",
         "demo_employees": [
-            {"id": "EMP-IN-001", "name": "Aarav Sharma", "entity": "India", "grade": 3, "role": "Senior Software Engineer"},
-            {"id": "EMP-UK-001", "name": "Eleanor Vance", "entity": "UK", "grade": 6, "role": "Director of Product Engineering"},
-            {"id": "EMP-IN-002", "name": "Pooja Patel", "entity": "India", "grade": 1, "role": "Associate QA Engineer"},
-            {"id": "EMP-UK-002", "name": "Liam Davies", "entity": "UK", "grade": 3, "role": "DevOps Specialist"},
-            {"id": "EMP-IN-003", "name": "Vikram Singhania", "entity": "India", "grade": 7, "role": "VP of Technology (Executive Discretionary)"},
+            {"id": "EMP-IND-301", "name": "Aarav Sharma", "entity": "India", "grade": 3, "role": "Senior Software Engineer"},
+            {"id": "EMP-UK-601", "name": "Eleanor Vance", "entity": "UK", "grade": 6, "role": "Director of Product Engineering"},
+            {"id": "EMP-IND-102", "name": "Pooja Patel", "entity": "India", "grade": 1, "role": "Associate QA Engineer"},
+            {"id": "EMP-UK-304", "name": "Liam Davies", "entity": "UK", "grade": 3, "role": "DevOps Specialist"},
+            {"id": "EMP-IND-701", "name": "Vikram Singhania", "entity": "India", "grade": 7, "role": "VP of Technology (Executive Discretionary)"},
             {"id": "EMP-INJECT-99", "name": "Mallory Attacker", "entity": "India", "grade": 2, "role": "Prompt Injection & Privacy Probe"}
         ],
         "rubric_checklist": {
@@ -950,3 +1061,90 @@ async def handle_week12_overview() -> Dict[str, Any]:
             "demo_script": "demo_script.md (10-minute 4-part demo + hostile questions defense)"
         }
     }
+
+
+# ==============================================================================
+# OBSERVABILITY & TRACE ACCESS ENDPOINTS (ALL WAYS OF GETTING TRACES)
+# ==============================================================================
+
+@api_router.get("/capstone/traces")
+async def get_traces(
+    limit: int = 50,
+    offset: int = 0,
+    status: Optional[str] = None,
+    name: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    search: Optional[str] = None,
+    session_id: Optional[str] = None,
+    route: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Returns paginated, multi-filter queryable traces with attached evaluation scores."""
+    return capstone_telemetry.get_traces(
+        limit=limit,
+        offset=offset,
+        status=status,
+        name=name,
+        employee_id=employee_id,
+        search_query=search,
+        session_id=session_id,
+        route=route,
+    )
+
+
+@api_router.get("/capstone/traces/sessions/{session_id}")
+async def get_trace_session(session_id: str) -> Dict[str, Any]:
+    """Every turn of one conversation, oldest first."""
+    res = capstone_telemetry.get_traces(session_id=session_id, limit=500)
+    res["traces"].reverse()
+    return res
+
+
+@api_router.get("/capstone/traces/stats")
+async def get_traces_stats(name: Optional[str] = None) -> Dict[str, Any]:
+    """Returns statistical KPIs: latency percentiles, total cost, tokens, and PII compliance rate."""
+    return capstone_telemetry.get_metrics_summary(name=name)
+
+
+@api_router.get("/capstone/traces/waterfall/{trace_id}")
+async def get_trace_waterfall(trace_id: str) -> Dict[str, Any]:
+    """Returns timeline waterfall segments with exact millisecond offsets and widths for Gantt display."""
+    waterfall = capstone_telemetry.get_trace_waterfall(trace_id)
+    if not waterfall:
+        raise HTTPException(status_code=404, detail=f"Trace '{trace_id}' not found.")
+    return waterfall
+
+
+@api_router.get("/capstone/traces/langfuse/status")
+async def get_langfuse_status() -> Dict[str, Any]:
+    """Returns live Langfuse connection diagnostics and sync metrics."""
+    return capstone_telemetry.get_langfuse_status()
+
+
+@api_router.get("/capstone/traces/export/download")
+async def export_traces_download(format: str = "json"):
+    """Downloads traces formatted as a JSON array or newline-delimited JSONL."""
+    content = capstone_telemetry.export_traces(export_format=format)
+    media_type = "application/x-ndjson" if format == "jsonl" else "application/json"
+    return PlainTextResponse(content=content, media_type=media_type)
+
+
+@api_router.get("/capstone/traces/{trace_id}")
+async def get_trace_detail(trace_id: str) -> Dict[str, Any]:
+    """Deep inspection of a single trace with full span tree, attributes, and PII audit."""
+    trace = capstone_telemetry.get_trace_by_id(trace_id)
+    if not trace:
+        raise HTTPException(status_code=404, detail=f"Trace '{trace_id}' not found.")
+    return trace
+
+
+@api_router.post("/capstone/traces/{trace_id}/score")
+async def score_trace(trace_id: str, request: ScoreTraceRequest) -> Dict[str, Any]:
+    """Attaches human or automated evaluation score to trace, synchronized to Langfuse."""
+    res = capstone_telemetry.score_trace(
+        trace_id=trace_id,
+        name=request.name,
+        value=request.value,
+        comment=request.comment
+    )
+    return res
+

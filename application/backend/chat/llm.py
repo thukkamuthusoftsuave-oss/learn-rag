@@ -5,6 +5,7 @@ import os
 from typing import List, Dict, Any, Optional
 import httpx
 from application.backend.core.config import settings
+from application.backend.observability.langfuse_telemetry import capstone_telemetry as tracer
 
 MANDATED_REFUSAL_PHRASE = "I cannot answer this question based on the provided HR-207 policy documentation."
 
@@ -81,23 +82,44 @@ class AsyncLLMClient:
                 def _call_api():
                     return requests.post(endpoint, headers=headers, json=payload, timeout=25)
 
-                response = await asyncio.to_thread(_call_api)
-                if response.status_code == 200:
-                    res_json = response.json()
-                    answer = res_json["choices"][0]["message"]["content"].strip()
-                    citations = re.findall(r"\[\[(.*?)\]\]", answer)
-                    return {
-                        "answer": answer,
-                        "citations": citations,
-                        "model": model_to_use,
-                        "is_llm": True
-                    }
-                else:
-                    print(f"[-] LLM API Error: {response.status_code} - {response.text}")
+                provider = "groq" if settings.groq_api_key else "openrouter"
+                params = {"temperature": payload["temperature"], "max_tokens": payload["max_tokens"], "timeout_s": 25}
+                with tracer.span("llm_call", as_type="generation", input=payload["messages"],
+                                 metadata={"provider": provider, "endpoint": endpoint}) as gen:
+                    gen.update(model=model_to_use, model_parameters=params)
+                    response = await asyncio.to_thread(_call_api)
+                    gen.update(metadata={"http_status": response.status_code,
+                                         "provider_latency_ms": round(response.elapsed.total_seconds() * 1000, 2)})
+                    if response.status_code == 200:
+                        res_json = response.json()
+                        choice = res_json["choices"][0]
+                        answer = choice["message"]["content"].strip()
+                        citations = re.findall(r"\[\[(.*?)\]\]", answer)
+                        usage = res_json.get("usage") or {}
+                        gen.update(
+                            output=answer,
+                            usage={"input": usage.get("prompt_tokens", 0), "output": usage.get("completion_tokens", 0)} if usage else None,
+                            metadata={"finish_reason": choice.get("finish_reason"), "provider_response_id": res_json.get("id"),
+                                      "provider_model": res_json.get("model")},
+                        )
+                        return {
+                            "answer": answer,
+                            "citations": citations,
+                            "model": model_to_use,
+                            "is_llm": True,
+                            "usage": res_json.get("usage")
+                        }
+                    gen.update(level="ERROR", status_message=f"HTTP {response.status_code}: {response.text[:500]}")
+                print(f"[-] LLM API Error: {response.status_code} - {response.text}")
             except Exception as e:
                 print(f"[-] LLM Exception: {str(e)}")
                 # Log and proceed to high-precision factual extractor fallback
                 pass
+        else:
+            tracer.event("llm_not_configured", metadata={"reason": "no GROQ_API_KEY or OPENROUTER_API_KEY"}, level="WARNING")
+
+        tracer.event("offline_fallback_used", level="WARNING",
+                     metadata={"reason": "LLM call unavailable or failed; answering by sentence extraction"})
 
         # 2. High-Precision Offline Semantic Extractor (when no API key or network down)
         top_chunk = retrieved_chunks[0]

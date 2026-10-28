@@ -4,11 +4,28 @@ Features Pydantic v2 argument schemas, least-privilege output sandboxing,
 and dynamic dispatcher registration.
 """
 
+import inspect
 from enum import Enum
+from functools import wraps
 from typing import Dict, Any, Optional, Callable, Tuple, List
 from pydantic import BaseModel, Field
 from llama_index.core.tools import FunctionTool
 from application.backend.security.defense import security_defense
+from application.backend.observability.langfuse_telemetry import capstone_telemetry as tracer, redact
+
+
+def _traced_tool(fn: Callable) -> Callable:
+    """Every caller (fixed workflow, ReAct agent, squad) goes through here, so each call is a real tool span."""
+    sig = inspect.signature(fn)
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        call_args = dict(sig.bind(*args, **kwargs).arguments)
+        with tracer.span(f"tool::{fn.__name__.removeprefix('tool_')}", as_type="tool", input=call_args) as s:
+            out = fn(*args, **kwargs)
+            s.update(output=redact(out), level="WARNING" if out.get("status") == "error" else None)
+            return out
+    return wrapper
 
 
 class JurisdictionEnum(str, Enum):
@@ -94,6 +111,7 @@ STATUTORY_MANDATES: Dict[str, Dict[str, Any]] = {
 }
 
 
+@_traced_tool
 def tool_get_employee_record(employee_id: str, sandbox: bool = True) -> Dict[str, Any]:
     """Look up an employee's HR profile, with automatic least-privilege sandboxing."""
     clean_id = employee_id.strip().upper()
@@ -111,6 +129,7 @@ def tool_get_employee_record(employee_id: str, sandbox: bool = True) -> Dict[str
     return {"status": "success", "data": raw_record}
 
 
+@_traced_tool
 def tool_get_handbook_rule(jurisdiction: str, topic: str) -> Dict[str, Any]:
     """Look up internal HR-207 corporate handbook rules."""
     jur_key = jurisdiction.strip().upper()
@@ -121,6 +140,7 @@ def tool_get_handbook_rule(jurisdiction: str, topic: str) -> Dict[str, Any]:
     return {"status": "error", "message": f"No handbook rule found for {jur_key} on {topic}."}
 
 
+@_traced_tool
 def tool_get_jurisdiction_rules(jurisdiction: str, topic: str) -> Dict[str, Any]:
     """Look up statutory labor mandates and legal overrides."""
     jur_key = jurisdiction.strip().upper()

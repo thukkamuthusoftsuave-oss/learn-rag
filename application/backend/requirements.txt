@@ -12,3 +12,4 @@ numpy>=1.26.0
 mcp>=1.2.0
 fastmcp>=0.1.0
 llama-index-tools-mcp>=0.1.0
+langfuse>=3.0.0

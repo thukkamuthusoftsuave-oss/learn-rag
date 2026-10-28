@@ -27,6 +27,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[-] Pre-warming notice: {e}")
     yield
+    from application.backend.observability.langfuse_telemetry import capstone_telemetry
+    capstone_telemetry.flush()  # Langfuse exports in batches; don't drop the last ones
     print("[*] Shutting down Policy Assistant backend.")
 
 
